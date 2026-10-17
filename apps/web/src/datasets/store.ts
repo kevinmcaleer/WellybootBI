@@ -57,7 +57,9 @@ export interface StoreOptions {
 async function defaultRoot(): Promise<OpfsDir | undefined> {
   try {
     return (await navigator.storage?.getDirectory?.()) as OpfsDir | undefined;
-  } catch {
+  } catch (e) {
+    // Safari refuses OPFS in private windows (and Playwright's WebKit pages are private).
+    console.warn(`The browser has no private file storage here (${e instanceof Error ? e.message : String(e)}).`);
     return undefined;
   }
 }

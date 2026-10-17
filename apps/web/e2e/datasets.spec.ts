@@ -53,7 +53,7 @@ async function expectProfiled(page: Page, warnings: string[]) {
     .toBe('profiled');
 }
 
-test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload and delete', async ({ page }) => {
+test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload and delete', async ({ page, browserName }) => {
   const warnings: string[] = [];
   page.on('console', (m) => {
     if (m.type() === 'warning') warnings.push(m.text());
@@ -98,6 +98,13 @@ test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload
   await page.reload();
   await expect(page.getByTestId('engine-ready')).toBeVisible({ timeout: 30_000 });
   await expect(picker.getByTestId('dataset-list')).toContainText('Shop orders');
+  if (browserName === 'webkit') {
+    // Playwright's WebKit pages are private windows, where Safari keeps no copy: the file is chosen again,
+    // as the panel asks. Other browsers must have kept it.
+    await expect(picker.getByText('This file isn’t kept in this browser.', { exact: false })).toBeVisible();
+    expect(warnings.join('\n')).toMatch(/no private file storage|didn't keep a copy/);
+    await picker.getByTestId('choose-again-input').setInputFiles(fixture('puddle-orders-v2.parquet'));
+  }
   await expectProfiled(page, warnings);
   await expect(fields(page).nth(3)).toContainText('status');
   await expect(fields(page).nth(3)).toContainText('3 distinct');
