@@ -12,7 +12,7 @@ docker compose up -d --build
 
 Then open <http://localhost:8090> for the app. The server answers on <http://localhost:8787/healthz>. `docker compose ps` shows both as healthy once their health checks pass, `docker compose logs -f` follows their logs, and `docker compose down` stops them. After pulling new code, run `docker compose up -d --build` again to rebuild.
 
-These settings can go in the environment or in a `.env` file next to `compose.yaml`:
+These settings can go in the environment or in a `.env` file next to `compose.yaml` (copy `.env.example` to start one). None is needed to run locally:
 
 | Variable | Default | What it does |
 | --- | --- | --- |
@@ -47,7 +47,7 @@ The server image holds one bundled `server.js` on `node:22-alpine`, runs as the 
 
 1. In Cloudflare Zero Trust, go to Networks, then Tunnels, and create a tunnel. Copy its token.
 2. Add a public hostname pointing at the service `http://web:8080`.
-3. Next to `compose.yaml`, create a `.env` file containing `CLOUDFLARE_TUNNEL_TOKEN=<token>`, then start the stack with the tunnel:
+3. Copy `.env.example` to `.env` next to `compose.yaml` and set `CLOUDFLARE_TUNNEL_TOKEN` to the token (the tunnel's ID isn't needed: the token carries it), then start the stack with the tunnel:
 
    ```sh
    docker compose --profile tunnel up -d
