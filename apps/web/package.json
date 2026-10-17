@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run --project shared --no-isolate --pool=threads && vitest run --project isolated",
-    "fetch-extensions": "node scripts/fetch-duckdb-extensions.mjs public/duckdb-extensions"
+    "fetch-extensions": "node scripts/fetch-duckdb-extensions.mjs public/duckdb-extensions",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",
@@ -27,6 +28,8 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.56.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/react": "^19.3.0",
@@ -35,6 +38,7 @@
     "autoprefixer": "^10.6.1",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.1.1",
+    "playwright-core": "1.56.1",
     "postcss": "^8.5.30",
     "tailwindcss": "^3.4.19",
     "vite": "^7.3.7"
