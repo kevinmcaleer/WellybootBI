@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+test-results
+playwright-report
+*.tsbuildinfo
+.vite
+.DS_Store
+public/duckdb-extensions
+.env
+docs/_build
+.venv
+*.sqlite
