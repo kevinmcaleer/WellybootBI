@@ -4,8 +4,8 @@ const ds = (format: 'parquet' | 'csv' | 'tsv' | 'json' | 'ndjson') => ({ id: 'ab
 
 describe('dataset SQL', () => {
   it('names the file and relation after the id', () => {
-    expect(datasetFileName(ds('parquet'))).toBe('ds_abc12345.parquet');
-    expect(datasetFileName(ds('ndjson'))).toBe('ds_abc12345.ndjson');
+    expect(datasetFileName(ds('parquet'), 1)).toBe('ds_abc12345_1.parquet');
+    expect(datasetFileName(ds('ndjson'), 7)).toBe('ds_abc12345_7.ndjson');
     expect(datasetRelationName(ds('csv'))).toBe('ds_abc12345');
   });
 
@@ -16,12 +16,12 @@ describe('dataset SQL', () => {
     ['json', `read_json_auto('ds_abc12345.json')`],
     ['ndjson', `read_json_auto('ds_abc12345.ndjson', format = 'newline_delimited')`],
   ] as const)('reads %s with %s', (format, sql) => {
-    expect(readDataset(ds(format))).toBe(sql);
+    expect(readDataset(ds(format), datasetFileName(ds(format), 0).replace('_0', ''))).toBe(sql);
   });
 
   it('makes Parquet a view and the rest tables', () => {
-    expect(createRelation(ds('parquet'))).toBe(`CREATE OR REPLACE VIEW "ds_abc12345" AS SELECT * FROM read_parquet('ds_abc12345.parquet')`);
-    expect(createRelation(ds('csv'))).toMatch(/^CREATE OR REPLACE TABLE "ds_abc12345" AS SELECT \* FROM read_csv/);
+    expect(createRelation(ds('parquet'), 'ds_abc12345.parquet')).toBe(`CREATE OR REPLACE VIEW "ds_abc12345" AS SELECT * FROM read_parquet('ds_abc12345.parquet')`);
+    expect(createRelation(ds('csv'), 'ds_abc12345.csv')).toMatch(/^CREATE OR REPLACE TABLE "ds_abc12345" AS SELECT \* FROM read_csv/);
   });
 
   it('drops whatever goes by the name, view or table', () => {

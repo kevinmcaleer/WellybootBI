@@ -187,7 +187,7 @@ export async function replaceWith(id: string, staged: Staged): Promise<Dataset> 
 
 /** Drop a prepared export that wasn't used. */
 export async function discard(staged: Staged): Promise<void> {
-  await unregisterDataset(await engineOf(), { id: staged.id, format: staged.record.format, fileName: staged.record.fileName }).catch(() => undefined);
+  await unregisterDataset(await engineOf(), staged).catch(() => undefined);
 }
 
 /** Choose a missing dataset's file again. Warns, but goes on, when it doesn't start like the original. */

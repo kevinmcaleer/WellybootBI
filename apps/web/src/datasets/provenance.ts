@@ -1,7 +1,7 @@
 import { PUDDLE_KEYS, ProvenanceZ, type Dataset, type Provenance } from '@wellyboot/shared';
-import { datasetFileName } from '../compiler/datasets';
 import { parquetKvMetadata } from '../compiler/provenance';
 import { tableRows, type EngineClient } from '../engine';
+import { registeredFileName } from './register';
 
 const json = (text: string | undefined): unknown => {
   if (text == null) return undefined;
@@ -36,7 +36,8 @@ export function parseProvenance(kv: Record<string, string>): Provenance | undefi
 
 /** Read the provenance Puddle wrote into a registered Parquet dataset; undefined for other formats or when absent. */
 export async function readProvenance(engine: EngineClient, ds: Pick<Dataset, 'id' | 'format'>): Promise<Provenance | undefined> {
-  if (ds.format !== 'parquet') return undefined;
-  const rows = tableRows((await engine.query(parquetKvMetadata(datasetFileName(ds)), { priority: 'preview', label: 'Reading provenance' })).table);
+  const file = registeredFileName(ds.id);
+  if (ds.format !== 'parquet' || !file) return undefined;
+  const rows = tableRows((await engine.query(parquetKvMetadata(file), { priority: 'preview', label: 'Reading provenance' })).table);
   return parseProvenance(Object.fromEntries(rows.map((r) => [String(r.key), String(r.value)])));
 }

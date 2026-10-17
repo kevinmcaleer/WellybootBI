@@ -8,8 +8,12 @@ type DatasetRef = Pick<Dataset, 'id' | 'format'>;
 
 const EXT: Record<DatasetFormat, string> = { parquet: 'parquet', csv: 'csv', tsv: 'tsv', json: 'json', ndjson: 'ndjson' };
 
-/** The name a dataset's file is registered under in DuckDB's virtual file system. */
-export const datasetFileName = (ds: DatasetRef) => `ds_${ds.id}.${EXT[ds.format]}`;
+/**
+ * The name a dataset's file is registered under in DuckDB's virtual file system. Each registration gets a new
+ * `version`: DuckDB keeps what it learned about a file (its size, its Parquet footer) by name, so a newer export
+ * registered under the old name is read with the old file's size and fails.
+ */
+export const datasetFileName = (ds: DatasetRef, version: number) => `ds_${ds.id}_${version}.${EXT[ds.format]}`;
 
 /** The view (Parquet) or table (everything else) charts query: `ds_<id>`. */
 export const datasetRelationName = (ds: Pick<Dataset, 'id'>) => `ds_${ds.id}`;
@@ -21,8 +25,8 @@ export const datasetRelationName = (ds: Pick<Dataset, 'id'>) => `ds_${ds.id}`;
 export const datasetRelationKind = (ds: Pick<Dataset, 'format'>): 'view' | 'table' => (ds.format === 'parquet' ? 'view' : 'table');
 
 /** The table function call that reads a dataset's file, with the options Puddle reads the same formats with. */
-export function readDataset(ds: DatasetRef): string {
-  const file = str(datasetFileName(ds));
+export function readDataset(ds: DatasetRef, fileName: string): string {
+  const file = str(fileName);
   switch (ds.format) {
     case 'parquet':
       return `read_parquet(${file})`;
@@ -46,9 +50,9 @@ export const existingRelation = (ds: Pick<Dataset, 'id'>) =>
 export const dropRelation = (ds: Pick<Dataset, 'id'>, type: string) =>
   `DROP ${type === 'VIEW' ? 'VIEW' : 'TABLE'} IF EXISTS ${ident(datasetRelationName(ds))}`;
 
-/** Create the dataset's view or table. */
-export const createRelation = (ds: DatasetRef) =>
-  `CREATE OR REPLACE ${datasetRelationKind(ds) === 'view' ? 'VIEW' : 'TABLE'} ${ident(datasetRelationName(ds))} AS SELECT * FROM ${readDataset(ds)}`;
+/** Create the dataset's view or table over its registered file. */
+export const createRelation = (ds: DatasetRef, fileName: string) =>
+  `CREATE OR REPLACE ${datasetRelationKind(ds) === 'view' ? 'VIEW' : 'TABLE'} ${ident(datasetRelationName(ds))} AS SELECT * FROM ${readDataset(ds, fileName)}`;
 
 /** Every row of a registered dataset, for DESCRIBE. */
 export const selectDataset = (ds: Pick<Dataset, 'id'>) => `SELECT * FROM ${ident(datasetRelationName(ds))}`;
