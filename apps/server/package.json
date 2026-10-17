@@ -1,0 +1,24 @@
+{
+  "name": "@wellyboot/server",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The Wellyboot BI server: publishing, share links and embeds. For now only a health check.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "build": "esbuild src/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist/server.js",
+    "start": "node dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.19.5",
+    "@wellyboot/shared": "*",
+    "hono": "^4.10.1"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.11",
+    "tsx": "^4.20.6"
+  }
+}
