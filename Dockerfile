@@ -11,7 +11,11 @@ COPY apps/web/package.json apps/web/
 COPY apps/server/package.json apps/server/
 RUN npm ci
 COPY . .
-RUN npm run build -w @wellyboot/web
+# Bundle DuckDB's json and parquet extensions so the app never fetches them from extensions.duckdb.org.
+# FETCH_EXTENSIONS=0 skips this where that site can't be reached; JSON and Parquet then fall back to it.
+ARG FETCH_EXTENSIONS=1
+RUN if [ "$FETCH_EXTENSIONS" = "1" ]; then npm run fetch-extensions -w @wellyboot/web; fi \
+ && npm run build -w @wellyboot/web
 
 FROM nginxinc/nginx-unprivileged:1.27-alpine
 COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf

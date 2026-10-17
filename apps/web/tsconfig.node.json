@@ -2,10 +2,20 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-    "lib": ["ES2023", "DOM"],
+    "lib": [
+      "ES2023",
+      "DOM"
+    ],
     "allowJs": true,
     "noUncheckedIndexedAccess": false,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["vite.config.ts", "tailwind.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "tailwind.config.ts",
+    "playwright.config.ts",
+    "e2e"
+  ]
 }

@@ -7,6 +7,8 @@ services:
     image: ${WELLYBOOT_WEB_IMAGE:-wellyboot-web:latest}
     build:
       context: .
+      args:
+        FETCH_EXTENSIONS: ${FETCH_EXTENSIONS:-1}
     restart: unless-stopped
     read_only: true
     # nginx keeps its pid and temporary files here.

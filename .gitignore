@@ -6,7 +6,7 @@ playwright-report
 *.tsbuildinfo
 .vite
 .DS_Store
-public/duckdb-extensions
+**/public/duckdb-extensions
 .env
 docs/_build
 .venv

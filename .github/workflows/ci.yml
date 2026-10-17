@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, typecheck and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      # Every workspace's unit tests, and the engine tests on the Node build of DuckDB-WASM.
+      - run: npm test
+
+  e2e:
+    # One job per browser, each split into shards that run in parallel. The suite is small for now; raise the
+    # shard counts as it grows, keeping every job under about five minutes.
+    name: Playwright tests in ${{ matrix.browser }} (${{ matrix.shard }} of ${{ matrix.shards }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { browser: chromium, shard: 1, shards: 1 }
+          - { browser: firefox, shard: 1, shards: 1 }
+          - { browser: webkit, shard: 1, shards: 1 }
+    env:
+      E2E_BROWSERS: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+        working-directory: apps/web
+      - run: npm run e2e -w @wellyboot/web -- --shard=${{ matrix.shard }}/${{ matrix.shards }}
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}-${{ matrix.shard }}
+          path: |
+            apps/web/playwright-report
+            apps/web/test-results
+          retention-days: 7
+
+  container:
+    name: Container images and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Build both images for arm64
+        run: |
+          docker buildx build --platform linux/arm64 -t wellyboot-web:ci-arm64 --load .
+          docker buildx build --platform linux/arm64 -f apps/server/Dockerfile -t wellyboot-server:ci-arm64 --load .
+      - name: Run the arm64 images
+        run: |
+          docker run -d --platform linux/arm64 --read-only --tmpfs /tmp -p 8091:8080 wellyboot-web:ci-arm64
+          docker run -d --platform linux/arm64 --read-only -p 8788:8787 wellyboot-server:ci-arm64
+          scripts/smoke-test.sh http://localhost:8091 http://localhost:8788
+      - name: Build and run the amd64 stack with Docker Compose
+        run: docker compose up -d --build
+      - name: Smoke test the amd64 stack
+        run: scripts/smoke-test.sh
+      - if: failure()
+        run: docker compose logs

@@ -20,6 +20,7 @@ These settings can go in the environment or in a `.env` file next to `compose.ya
 | `WELLYBOOT_SERVER_PORT` | `8787` | The port the server answers on, on the host |
 | `WELLYBOOT_WEB_IMAGE` | `wellyboot-web:latest` | The web image to run |
 | `WELLYBOOT_SERVER_IMAGE` | `wellyboot-server:latest` | The server image to run |
+| `FETCH_EXTENSIONS` | `1` | Set `0` to build where extensions.duckdb.org can't be reached (see below) |
 | `CLOUDFLARE_TUNNEL_TOKEN` | none | The tunnel's token, for the `tunnel` profile |
 
 ## The images
@@ -38,10 +39,22 @@ What the web image does (`deploy/nginx.conf`, after Puddle's):
 
 - Every response carries `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Embedder-Policy: require-corp` (`deploy/wellyboot-headers.inc`), so the page is cross-origin isolated for DuckDB-WASM.
 - `.wasm` is served as `application/wasm`, and responses are gzipped.
-- Hashed files under `/assets/` are cached for a year; `index.html` is always revalidated, so a deploy shows on the next visit.
+- DuckDB's `json` and `parquet` extensions are downloaded at build time and served from `/duckdb-extensions/<version>/`, so the app never contacts extensions.duckdb.org. Where that site can't be reached during the build, add `--build-arg FETCH_EXTENSIONS=0`; JSON and Parquet then load from extensions.duckdb.org at run time instead.
+- Hashed files under `/assets/` and the extensions are cached for a year; `index.html` is always revalidated, so a deploy shows on the next visit.
 - `/healthz` answers `ok`. The container runs as a non-root user with a read-only root file system and a writable `/tmp`.
 
 The server image holds one bundled `server.js` on `node:22-alpine`, runs as the `node` user and reads its port from `WELLYBOOT_PORT` (default 8787).
+
+## The smoke test
+
+`scripts/smoke-test.sh` checks a running stack the way CI does: the web app answers with the cross-origin isolation headers, `/healthz` answers on both services, and the self-hosted extensions are served as `application/wasm`.
+
+```sh
+docker compose up -d --build
+scripts/smoke-test.sh                       # or: scripts/smoke-test.sh http://localhost:8090 http://localhost:8787
+```
+
+Pass `--no-extensions` for an image built with `FETCH_EXTENSIONS=0`.
 
 ## The tunnel
 
