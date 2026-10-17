@@ -22,6 +22,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      # DuckDB's json and parquet extensions, which the dataset engine tests load from a local copy.
+      - run: npm run fetch-extensions -w @wellyboot/web
       # Every workspace's unit tests, and the engine tests on the Node build of DuckDB-WASM.
       - run: npm test
 

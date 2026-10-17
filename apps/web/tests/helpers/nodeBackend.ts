@@ -1,6 +1,6 @@
 // DuckDB-WASM's blocking Node build behind the same DuckBackend interface the browser uses,
 // so engine and compiler tests run real DuckDB-WASM against fixture files.
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -32,7 +32,19 @@ export async function createNodeTokenizer(): Promise<(sql: string) => { offsets:
   return (sql) => db.tokenize(sql);
 }
 
-export async function createNodeBackend(opts: { beforeQuery?: (sql: string) => Promise<void> } = {}): Promise<DuckBackend> {
+/** Where `npm run fetch-extensions` puts DuckDB's json and parquet extensions; CI fetches them before the tests. */
+const EXTENSIONS_DIR = join(__dirname, '../../public/duckdb-extensions');
+
+export interface NodeBackendOptions {
+  beforeQuery?: (sql: string) => Promise<void>;
+  /**
+   * Load DuckDB's json and parquet extensions from the local copy, for tests that read those formats. Without it
+   * the engine stays hermetic and a read that needs an extension fails, as the plain-word error tests expect.
+   */
+  extensions?: boolean;
+}
+
+export async function createNodeBackend(opts: NodeBackendOptions = {}): Promise<DuckBackend> {
   const db = await createDuckDB(
     {
       mvp: { mainModule: join(dist, 'duckdb-mvp.wasm'), mainWorker: join(dist, 'duckdb-node-mvp.worker.cjs') },
@@ -48,6 +60,11 @@ export async function createNodeBackend(opts: { beforeQuery?: (sql: string) => P
   // synchronous build when offline. Tests stay hermetic: anything needing an extension fails fast instead.
   conn.query('SET autoinstall_known_extensions = false');
   conn.query('SET autoload_known_extensions = false');
+  if (opts.extensions) {
+    const dir = join(EXTENSIONS_DIR, db.getVersion(), 'wasm_eh');
+    if (!existsSync(dir)) throw new Error(`DuckDB's extensions aren't in ${dir}. Run \`npm run fetch-extensions -w @wellyboot/web\` once, then run the tests again.`);
+    for (const ext of ['json', 'parquet']) conn.query(`LOAD '${join(dir, `${ext}.duckdb_extension.wasm`).replace(/'/g, "''")}'`);
+  }
   const outDir = mkdtempSync(join(tmpdir(), 'wellyboot-export-'));
   return {
     info: { bundle: 'eh', version: db.getVersion(), spill: false, crossOriginIsolated: false },
