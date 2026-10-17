@@ -79,7 +79,9 @@ test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload
   await page.reload();
   await expect(page.getByTestId('engine-ready')).toBeVisible({ timeout: 30_000 });
   await expect(picker.getByTestId('dataset-list')).toContainText('Shop orders');
-  await expect(fields(page).nth(3)).toContainText('2 distinct');
+  await expect(fields(page).nth(3)).toContainText('status');
+  await expect(fields(page).nth(3)).toContainText('3 distinct');
+  await expect(fields(page).nth(3)).toContainText('paid (5)');
   expect(await countRows(page)).toBe(7);
 
   await picker.getByRole('button', { name: 'Delete' }).click();
