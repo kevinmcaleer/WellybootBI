@@ -12,10 +12,21 @@ Needs Node 22 or later.
 
 ```sh
 npm install
+npm run dev          # the web app on http://localhost:5173
+npm run dev:server   # the server on http://localhost:8787
 npm run lint
 npm run typecheck
-npm test           # every workspace's unit tests
+npm test             # every workspace's unit tests
+npm run build
 ```
+
+## Running it with Docker
+
+```sh
+docker compose up -d --build
+```
+
+Then open <http://localhost:8090>. The server answers on <http://localhost:8787/healthz>. See [deploy/README.md](deploy/README.md) for the settings and the Cloudflare Tunnel.
 
 ## Why a monorepo
 
