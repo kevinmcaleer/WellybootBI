@@ -102,7 +102,17 @@ test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload
     // Playwright's WebKit pages are private windows, where Safari keeps no copy: the file is chosen again,
     // as the panel asks. Other browsers must have kept it.
     await expect(picker.getByText('This file isn’t kept in this browser.', { exact: false })).toBeVisible();
-    expect(warnings.join('\n')).toMatch(/no private file storage|didn't keep a copy/);
+    const opfs = await page.evaluate(async () => {
+      if (typeof navigator.storage?.getDirectory !== 'function') return 'no getDirectory';
+      try {
+        const dir = await (await navigator.storage.getDirectory()).getDirectoryHandle('probe', { create: true });
+        const file = await dir.getFileHandle('probe', { create: true });
+        return 'createWritable' in file ? 'writable' : 'no createWritable';
+      } catch (e) {
+        return `refused: ${e instanceof Error ? `${e.name} ${e.message}` : String(e)}`;
+      }
+    });
+    expect(`${opfs}\n${warnings.join('\n')}`).toMatch(/no private file storage|didn't keep a copy|no getDirectory|refused/);
     await picker.getByTestId('choose-again-input').setInputFiles(fixture('puddle-orders-v2.parquet'));
   }
   await expectProfiled(page, warnings);
