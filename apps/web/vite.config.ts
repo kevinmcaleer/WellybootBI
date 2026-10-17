@@ -27,7 +27,7 @@ function isolation(): Plugin {
 }
 
 /** Test files that set their own environment or mock modules or globals, so they must not share a registry. */
-const ISOLATED = ['src/ui/locale.test.ts'];
+const ISOLATED = ['src/app/theme.test.ts', 'src/ui/locale.test.ts'];
 
 export default defineConfig({
   plugins: [react(), isolation()],
