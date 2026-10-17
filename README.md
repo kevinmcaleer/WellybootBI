@@ -44,7 +44,7 @@ Puddle is one package because it is browser-only. Wellyboot BI also has a small 
 |---|---|
 | `packages/shared/` | Zod schemas shared by the web app and the server, the `.wellyboot.json` format version and its migrations |
 | `apps/web/` | The Wellyboot BI web app (Vite, React, TypeScript), local-first on DuckDB-WASM |
-| `apps/web/src/design-system/` | Tokens, Tailwind preset and component CSS, vendored from Puddle (don't hand-edit; re-copy) |
+| `apps/web/src/design-system/` | Tokens, Tailwind preset and component CSS, vendored from Puddle; `design-system.lock.json` pins it and `npm run design-system -- check\|sync <puddle-checkout>` compares or re-copies it |
 | `apps/web/src/ui/` | The design system's components in TypeScript (`Button`, `Dialog`, `Menu`, `Field`, `Toolbar`, `StatusStrip` and the rest), ported from Puddle, and how numbers and dates are shown (`locale.ts`, `format.ts`) |
 | `apps/web/src/app/` | The app shell: toolbar, screens and hash routes, status strip, theme, engine boot, keyboard shortcuts |
 | `apps/web/src/engine/` | DuckDB-WASM in a Web Worker and the typed `EngineClient` (priorities, cancellation, Stop, plain-word errors), ported from Puddle |

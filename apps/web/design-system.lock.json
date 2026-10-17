@@ -1,0 +1,33 @@
+{
+  "puddle": "https://github.com/kevinmcaleer/puddle",
+  "puddleCommit": "c1b481684eac7efbc9c39d9dee873a58306d5bee",
+  "files": {
+    "src/design-system/components.css": "82e96a8f627006b1039731ffc75883d0567a0b3958763b2de04f2377864503dd",
+    "src/design-system/contrast.test.ts": "c8067ba907678317738db82b9824800cc34eb031e98c2c8a640379a58d7cda50",
+    "src/design-system/fonts.css": "88d7e94a716fbb32ada55d5f2716beb7f697959d3180c2024f7beeb4bd2b3d39",
+    "src/design-system/tailwind.preset.js": "180b6c7aaad2f5886d116aab5d243853442fa55ec1f21b70b01d73d93bfb691e",
+    "src/design-system/tokens.css": "74eb6f28d6178957b177bbc9b902b1319417238f1c5e4e215229c230d857843a",
+    "src/design-system/tokens.json": "677c92208e728b0d13947655fb7ea2471e5a149b9df80fbaa33ac0f25aa0ee4d",
+    "src/ui/Banner.tsx": "775f784a90f813f8f4eb4d49b7a264e6786cdae0a0b0e125b173e1664fc3bbdf",
+    "src/ui/Button.test.tsx": "add32b260babdb8b8ea46aafc0cd59de760ede151120d8a3e661c44431579b6b",
+    "src/ui/Button.tsx": "4237a112d24e1d86271043df7705f0f60737740398a7d277465d50768ab17846",
+    "src/ui/Dialog.test.tsx": "92f2518b94b2702805a8bdce6ae7b3bf4d19fe708894d6278fe77b74aea4e0a7",
+    "src/ui/Dialog.tsx": "a0d463e4a33b27ba4532e8221eb80b83210b496996063fb303e2e2a262134fd1",
+    "src/ui/Field.tsx": "9f32ec919490bcf62386ccc80b319551f4294356e02cc745b39e8d2e4b26affd",
+    "src/ui/Icon.tsx": "155ce2e7c9c5c8763cae04499947019418921ee923264ace9ef5c08efa408eda",
+    "src/ui/LiveRegion.test.tsx": "b289d1645b49bd4cdaf5e9f65c257be05225fc2153a799922db43d937868f680",
+    "src/ui/LiveRegion.tsx": "ceadd00e57b5b08e8699d61ddd4197c9837c228b51fef4519e9b072e155aa242",
+    "src/ui/Menu.test.tsx": "3821211f71185746958c192562e06bf815afd801432bd2666869538050ec2ba0",
+    "src/ui/Menu.tsx": "76093bb55a889ad1997bcb57767df0a3431f7a310a836b0f1912d8201bc8a256",
+    "src/ui/StatusBadge.tsx": "8f1dd88ac19245181eb7defba8ef74543c36a44ee7a6ead5b3539ad5b9c82100",
+    "src/ui/Toolbar.tsx": "2fcacba3886320338c7c1a5e57423073020c59dc98e32cfc58ddf8fb9f07ebf3",
+    "src/ui/announce.ts": "8f6f6081443544b2fb25b9d6f7f91a0b07a615a6b377391534fc19db53e023e5",
+    "src/ui/columnKind.ts": "92d12df9263072baab5468d283f3bdacf566aa57f7b2572f1f3accffcc7a34db",
+    "src/ui/cx.ts": "3c284ee4a128f6b6cdb07df10c158502d91a740fb0022cd22d26e8d4269d46fe",
+    "src/ui/format.test.ts": "86c4404647733e271f1d5a3a830bb951133f09f5777fbd711b36d3da0af3b762",
+    "src/ui/format.ts": "257500f7d1fbc76daafcbec94c0c3ac90d0ca833e992829e662350afafb2aca5",
+    "src/ui/locale.test.ts": "6a4ce1e47ba1d50c22d34377f191656cfe3ed156cc1d4e35b12abed4257dab04",
+    "src/ui/locale.ts": "2c5010cec316eef9b96b2bcbf3f5180c0c3cd9d45b1b57ab677bf1962d15aaf4",
+    "src/ui/menuGroups.ts": "894038054cddbc59903458eab78c9b6c69680bbfecc598173de599cac6cc8ca3"
+  }
+}

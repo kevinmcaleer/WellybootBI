@@ -11,8 +11,9 @@ Charts and dashboards over Puddle data, on DuckDB-WASM in the browser. An npm wo
 
 ## Conventions
 
-- Follow the design system in `apps/web/src/design-system/` and `apps/web/src/ui/`: tokens only, no hard-coded colours or sizes; sentence case; no emoji.
-- The design system is vendored from Puddle: don't hand-edit it, re-copy it from Puddle.
+- All UI uses Puddle's design system, so the two apps look like one family. Build screens from the components in `apps/web/src/ui/` and style them with the design-system tokens (Tailwind classes from `tailwind.preset.js` or the CSS variables in `tokens.css`): no raw colours, Tailwind palette colours, type sizes, or spacing, radii and shadows off the token scale. Sentence case; no emoji. `apps/web/tests/design-system.test.ts` enforces this.
+- When a screen needs a component Puddle already has (tabs, context menu, type tags, field chips and so on), port Puddle's rather than writing a new one, and list it in `apps/web/src/ui/README.md`. A component Puddle doesn't have is built from the tokens and existing components, never new one-off styles.
+- The design system and the components copied from Puddle unchanged are vendored: don't hand-edit them. `apps/web/design-system.lock.json` pins their hashes; update them with `npm run design-system -- sync <puddle-checkout>` from `apps/web`.
 - SQL is generated only in `apps/web/src/compiler/`; quote through its `sql.ts`.
 - Schemas that the browser and the server both read live in `packages/shared`, never copied into an app.
 - A change to the `.wellyboot.json` shape raises `FORMAT_VERSION` and adds a migration.
