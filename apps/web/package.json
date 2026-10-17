@@ -10,13 +10,16 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "test": "vitest run --project shared --no-isolate --pool=threads && vitest run --project isolated"
+    "test": "vitest run --project shared --no-isolate --pool=threads && vitest run --project isolated",
+    "fetch-extensions": "node scripts/fetch-duckdb-extensions.mjs public/duckdb-extensions"
   },
   "dependencies": {
+    "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "@fontsource-variable/instrument-sans": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "@wellyboot/shared": "*",
+    "apache-arrow": "^17.0.0",
     "lucide-react": "^1.57.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

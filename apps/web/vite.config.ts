@@ -32,6 +32,7 @@ const ISOLATED = ['src/ui/locale.test.ts'];
 export default defineConfig({
   plugins: [react(), isolation()],
   worker: { format: 'es' },
+  optimizeDeps: { exclude: ['@duckdb/duckdb-wasm'] },
   build: { target: 'es2022' },
   test: {
     globals: true,
