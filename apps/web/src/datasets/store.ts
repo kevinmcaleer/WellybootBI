@@ -90,8 +90,9 @@ async function writeOpfs(dir: OpfsDir, id: string, data: Blob, opts: StoreOption
       await opts.writeInWorker(DIR, id, data);
       return true;
     }
-  } catch {
+  } catch (e) {
     // Out of quota, or OPFS refused: forget the partial copy and fall back.
+    console.warn(`The browser didn't keep a copy of the file (${e instanceof Error ? e.message : String(e)}).`);
   }
   await dir.removeEntry(id).catch(() => undefined);
   return false;

@@ -39,14 +39,14 @@ async function countRows(page: Page): Promise<number> {
 const fields = (page: Page) => page.getByTestId('dataset-field');
 
 /** Wait for the open dataset's profile; if it fails, or the file can't be reattached, report what the panel says. */
-async function expectProfiled(page: Page) {
+async function expectProfiled(page: Page, warnings: string[]) {
   const panel = page.getByTestId('dataset-panel');
   await expect
     .poll(
       async () => {
         const failed = panel.getByText('Profile failed');
         if (await failed.isVisible()) return `Profile failed: ${await failed.getAttribute('title')}`;
-        return (await panel.getByText(/distinct/).count()) > 0 ? 'profiled' : await panel.innerText();
+        return (await panel.getByText(/distinct/).count()) > 0 ? 'profiled' : [await panel.innerText(), ...warnings].join('\n');
       },
       { timeout: 20_000 },
     )
@@ -54,6 +54,10 @@ async function expectProfiled(page: Page) {
 }
 
 test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload and delete', async ({ page }) => {
+  const warnings: string[] = [];
+  page.on('console', (m) => {
+    if (m.type() === 'warning') warnings.push(m.text());
+  });
   await openEditor(page);
   await page.getByRole('button', { name: 'Add dataset' }).click();
   await dropFile(page, fixture('puddle-orders.parquet'), 'puddle-orders.parquet');
@@ -94,7 +98,7 @@ test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload
   await page.reload();
   await expect(page.getByTestId('engine-ready')).toBeVisible({ timeout: 30_000 });
   await expect(picker.getByTestId('dataset-list')).toContainText('Shop orders');
-  await expectProfiled(page);
+  await expectProfiled(page, warnings);
   await expect(fields(page).nth(3)).toContainText('status');
   await expect(fields(page).nth(3)).toContainText('3 distinct');
   await expect(fields(page).nth(3)).toContainText('paid (5)');
