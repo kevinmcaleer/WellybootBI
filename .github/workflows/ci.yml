@@ -50,6 +50,8 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
         working-directory: apps/web
+      # Serve DuckDB's json and parquet extensions from the build, as the web image does.
+      - run: npm run fetch-extensions -w @wellyboot/web
       - run: npm run e2e -w @wellyboot/web -- --shard=${{ matrix.shard }}/${{ matrix.shards }}
       - if: failure()
         uses: actions/upload-artifact@v4

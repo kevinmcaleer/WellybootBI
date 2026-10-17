@@ -4,7 +4,7 @@ An open source business intelligence tool for data curated in [Puddle](https://g
 
 Nothing leaves your browser until you publish.
 
-Work in progress: the plan is in the [epic](https://github.com/kevinmcaleer/WellybootBI/issues/11).
+How to bring data in from Puddle: [docs/sources.md](docs/sources.md). Work in progress: the plan is in the [epic](https://github.com/kevinmcaleer/WellybootBI/issues/11).
 
 ## Development
 
@@ -16,10 +16,10 @@ npm run dev          # the web app on http://localhost:5173
 npm run dev:server   # the server on http://localhost:8787
 npm run lint
 npm run typecheck
+npm run fetch-extensions -w @wellyboot/web  # once: DuckDB's json and parquet extensions, for the engine tests
 npm test             # every workspace's unit tests, plus engine tests on real DuckDB-WASM (Node build)
 npm run e2e          # Playwright against a production build (run `npx playwright install chromium` in apps/web once)
 npm run build
-npm run fetch-extensions -w @wellyboot/web  # optional: serve DuckDB's json and parquet extensions locally
 ```
 
 ## Tests
@@ -48,10 +48,11 @@ Puddle is one package because it is browser-only. Wellyboot BI also has a small 
 | `apps/web/src/ui/` | The design system's components in TypeScript (`Button`, `Dialog`, `Menu`, `Field`, `Toolbar`, `StatusStrip` and the rest), ported from Puddle, and how numbers and dates are shown (`locale.ts`, `format.ts`) |
 | `apps/web/src/app/` | The app shell: toolbar, screens and hash routes, status strip, theme, engine boot, keyboard shortcuts |
 | `apps/web/src/engine/` | DuckDB-WASM in a Web Worker and the typed `EngineClient` (priorities, cancellation, Stop, plain-word errors), ported from Puddle |
-| `apps/web/src/compiler/` | The only place SQL is written; identifiers and literals are quoted through `sql.ts` |
+| `apps/web/src/compiler/` | The only place SQL is written (`datasets.ts` registers a dataset as a view or table, `profile.ts` profiles its fields); identifiers and literals are quoted through `sql.ts` |
+| `apps/web/src/datasets/` | Datasets: format detection, https addresses, OPFS storage and file handles, the IndexedDB catalogue, field types, profiles, Puddle provenance, and the data source picker |
 | `apps/web/src/home/` | The dashboards home screen |
 | `apps/web/src/editor/` | The dashboard editor: canvas and inspector |
-| `apps/web/tests/` | Engine integration tests on the Node build of DuckDB-WASM, fixtures and helpers |
+| `apps/web/tests/` | Engine integration tests on the Node build of DuckDB-WASM (Parquet and JSON tests load the extensions `npm run fetch-extensions` downloads), fixtures and helpers |
 | `apps/web/e2e/` | Playwright tests, with axe for accessibility |
 | `apps/web/scripts/` | `fetch-duckdb-extensions.mjs`: DuckDB's json and parquet extensions for the build to serve |
 | `apps/server/` | The Wellyboot BI server (Node, Hono): for now only `GET /healthz`; publishing, share links and embeds come in later phases |

@@ -67,6 +67,18 @@ describe('provenance', () => {
     expect(await readProvenance(engine, ds)).toEqual({ project: 'Shop', node: 'Clean orders', exportedAt: '2026-10-17T12:00:00Z', rulesPassed: ['No missing ids'] });
   });
 
+  it('reads it from a Parquet fixture written the way Puddle’s Output node will', async () => {
+    const ds = { id: 'prov0003', format: 'parquet' as const, fileName: 'puddle-orders.parquet' };
+    await registerDataset(engine, ds, { blob: fixture('puddle-orders.parquet') });
+    expect(await readProvenance(engine, ds)).toEqual({
+      project: 'Shop',
+      node: 'Clean orders',
+      exportedAt: '2026-10-17T12:00:00.000Z',
+      sources: [{ name: 'shop-orders.csv' }],
+      rulesPassed: ['No missing ids'],
+    });
+  });
+
   it('is undefined for a Parquet file without it, and for other formats', async () => {
     const pq = { id: 'prov0002', format: 'parquet' as const, fileName: 'customers.parquet' };
     await registerDataset(engine, pq, { blob: fixture('customers.parquet') });
