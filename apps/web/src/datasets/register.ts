@@ -17,7 +17,9 @@ export async function registerDataset(engine: EngineClient, ds: DatasetRef, byte
   const name = datasetFileName(ds);
   await engine.dropFile(name).catch(() => undefined);
   if ('url' in bytes) await engine.registerUrl(name, bytes.url);
-  else await engine.registerFile(name, bytes.blob instanceof File ? bytes.blob : new File([bytes.blob], ds.fileName));
+  // A File of its own for each name: the same bytes can be registered twice while a replacement is checked
+  // (under a staging name, then under the dataset's), and dropping one name must not close the other's file.
+  else await engine.registerFile(name, new File([bytes.blob], ds.fileName));
   try {
     await engine.query(createRelation(ds), label);
   } catch (e) {

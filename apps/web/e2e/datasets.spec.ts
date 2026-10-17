@@ -70,6 +70,8 @@ test('a Puddle Parquet export: add, profile, provenance, rename, replace, reload
   await expect(diff.getByRole('region', { name: 'Retyped columns' })).toContainText('total');
   await expectAccessible(page, 'the schema diff');
   await replace.getByRole('button', { name: 'Replace' }).click();
+  // The dialog closes once the dataset is replaced; if it can't be, it stays open with the reason.
+  await expect.poll(async () => ((await replace.isVisible()) ? await replace.getByRole('alert').allTextContents() : 'closed')).toBe('closed');
   await expect(picker.getByTestId('dataset-name')).toHaveText('Shop orders');
   await expect(picker.getByTestId('dataset-summary')).toContainText('7 rows');
   expect(await countRows(page)).toBe(7);
