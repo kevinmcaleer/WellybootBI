@@ -12,7 +12,8 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run --project shared --no-isolate --pool=threads && vitest run --project isolated",
     "fetch-extensions": "node scripts/fetch-duckdb-extensions.mjs public/duckdb-extensions",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "design-system": "node scripts/design-system.mjs"
   },
   "dependencies": {
     "@duckdb/duckdb-wasm": "^1.33.1-dev57.0",
