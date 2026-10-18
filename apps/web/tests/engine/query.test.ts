@@ -139,6 +139,58 @@ describe('groups and measures', () => {
   });
 });
 
+describe('top N with others', () => {
+  const byUnits = (n: number, measures: Query['measures'] = [{ aggregate: 'sum', field: 'units' }]): Partial<Query> => ({
+    groups: [{ field: 'Region' }],
+    measures,
+    sort: [{ by: 'measure', index: 0, dir: 'desc' }],
+    limit: { n, others: true },
+  });
+
+  it('returns six rows for the top 5, whose sums add up to the total', async () => {
+    const rows = await run(byUnits(5));
+    expect(rows.map((r) => [r.Region, r['Sum of units'], r.__others])).toEqual([
+      [null, 19, false],
+      ['South', 12, false],
+      ['West', 8, false],
+      ["O'Brien's", 7, false],
+      ['East', 6, false],
+      [null, 3, true],
+    ]);
+    const total = (await run({ measures: [{ aggregate: 'sum', field: 'units' }] }))[0]!['Sum of units'];
+    expect(rows.reduce((t, r) => t + Number(r['Sum of units']), 0)).toBe(total);
+  });
+
+  it('takes the others row’s average and distinct count over its rows, not over the groups', async () => {
+    const rows = await run(byUnits(2, [{ aggregate: 'sum', field: 'units' }, { aggregate: 'avg', field: 'amount' }, { aggregate: 'countDistinct', field: 'Sales "rep" name' }]));
+    expect(rows).toEqual([
+      { Region: null, 'Sum of units': 19, 'Average of amount': 3.5, 'Count distinct of Sales "rep" name': 1, __others: false },
+      { Region: 'South', 'Sum of units': 12, 'Average of amount': 6.375, 'Count distinct of Sales "rep" name': 1, __others: false },
+      { Region: null, 'Sum of units': 24, 'Average of amount': 26.75, 'Count distinct of Sales "rep" name': 3, __others: true },
+    ]);
+  });
+
+  it('leaves out the others row when nothing is left over', async () => {
+    expect((await run(byUnits(6))).map((r) => r.__others)).toEqual([false, false, false, false, false, false]);
+  });
+
+  it('breaks ties by the group, so the same top N comes back every time', async () => {
+    const rows = await run({ groups: [{ field: 'Sales "rep" name' }], measures: [{ aggregate: 'count' }], sort: [{ by: 'measure', index: 0, dir: 'desc' }], limit: { n: 2, others: true } });
+    expect(rows.map((r) => [r['Sales "rep" name'], r.Count, r.__others])).toEqual([['Bob', 3, false], ['Ann', 2, false], [null, 5, true]]);
+  });
+
+  it('works over two groups and a date bucket, honouring the row limit', async () => {
+    const rows = await run(
+      { groups: [{ field: 'placed', bucket: { kind: 'date', unit: 'month' } }, { field: 'paid' }], measures: [{ aggregate: 'count' }], limit: { n: 3, others: true } },
+      { maxRows: 2 },
+    );
+    expect(rows).toEqual([
+      { placed: day('2026-01-01'), paid: false, Count: 1, __others: false },
+      { placed: day('2026-01-01'), paid: true, Count: 1, __others: false },
+    ]);
+  });
+});
+
 describe('filters', () => {
   const regions = async (filters: Query['filters']) => (await run({ groups: [{ field: 'Region' }], filters })).map((r) => r.Region);
 

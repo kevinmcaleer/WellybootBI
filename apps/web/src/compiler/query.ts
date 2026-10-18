@@ -7,6 +7,8 @@
 //   ORDER BY <the query's sort>, <every group not sorted on yet, ascending>   (so equal rows always come in one order)
 //   LIMIT <the top N, or the row limit for visuals when that is smaller>
 //
+// A top N with an others row is a WITH query instead (see compileTopN), still one statement.
+//
 // A group is a field as it is, a date truncated to a calendar unit (a DATE, or a TIMESTAMP for hours; zoned times in
 // UTC, since their date functions need the icu extension), or a number
 // floored to the start of its bin. Empty values group together as one NULL group, which the formatter labels; they
@@ -181,28 +183,73 @@ export interface QueryOptions extends CompileOptions, FilterOptions {}
 /** Turn a query into one DuckDB SELECT over its dataset. Throws a CompileError, naming the part, when it doesn't fit. */
 export function compileQuery(query: Query, schema: ColumnSchema[], opts: QueryOptions = {}): string {
   assertQuery(query, schema, opts);
+  if (query.limit?.others && query.groups.length) return compileTopN(query, schema, opts);
   const names = resultNames(query);
   const type = (field: string) => columnType(schema, field);
   const select = [
     ...query.groups.map((g, i) => `${compileGroup(g, type(g.field))} AS ${ident(names.groups[i]!)}`),
     ...query.measures.map((m, i) => `${compileMeasure(m, m.field == null ? '' : type(m.field))} AS ${ident(names.measures[i]!)}`),
   ];
-  const filters = [...query.filters, ...(opts.extraFilters ?? [])];
   const parts = [`SELECT ${list(select)}`, `FROM ${ident(datasetRelationName({ id: query.datasetId }))}`];
-  if (filters.length) parts.push(`WHERE ${filters.map((f) => compileFilter(f, type(f.field), opts)).join(' AND ')}`);
+  const where = whereClause(query, schema, opts);
+  if (where) parts.push(where);
   if (query.groups.length) parts.push(`GROUP BY ${list(query.groups.map((_, i) => String(i + 1)))}`);
-  const order = orderTerms(query, names);
+  const order = orderTerms(query, (by, i) => ident((by === 'group' ? names.groups : names.measures)[i]!));
   if (order.length) parts.push(`ORDER BY ${list(order)}`);
   const limit = Math.min(query.limit?.n ?? Infinity, opts.maxRows ?? Infinity);
   if (Number.isFinite(limit)) parts.push(`LIMIT ${num(limit)}`);
   return parts.join(' ');
 }
 
-/** The query's sort, then every group not sorted on yet, ascending; empty values last. */
-function orderTerms(query: Query, names: { groups: string[]; measures: string[] }): string[] {
-  const column = ident;
-  const terms = query.sort.map((s) => `${column((s.by === 'group' ? names.groups : names.measures)[s.index]!)} ${s.dir.toUpperCase()} NULLS LAST`);
+function whereClause(query: Query, schema: ColumnSchema[], opts: QueryOptions): string | undefined {
+  const filters = [...query.filters, ...(opts.extraFilters ?? [])];
+  return filters.length ? `WHERE ${filters.map((f) => compileFilter(f, columnType(schema, f.field), opts)).join(' AND ')}` : undefined;
+}
+
+/**
+ * The query's sort, then every group not sorted on yet, ascending, so rows that tie always come in the same order;
+ * empty values last. `term` writes the group or measure being sorted on.
+ */
+function orderTerms(query: Query, term: (by: 'group' | 'measure', index: number) => string): string[] {
+  const terms = query.sort.map((s) => `${term(s.by, s.index)} ${s.dir.toUpperCase()} NULLS LAST`);
   const sorted = new Set(query.sort.filter((s) => s.by === 'group').map((s) => s.index));
-  query.groups.forEach((_, i) => sorted.has(i) || terms.push(`${column(names.groups[i]!)} ASC NULLS LAST`));
+  query.groups.forEach((_, i) => sorted.has(i) || terms.push(`${term('group', i)} ASC NULLS LAST`));
   return terms;
+}
+
+/** A group's value in the top N's working rows. */
+const groupKey = (i: number) => ident(`__wb_g${i}`);
+
+/**
+ * Top N with others: the first n groups in sort order, then one more row, flagged in OTHERS_COLUMN, summarising every
+ * other row. Groups are ranked once; each row is then summarised with its group's rank, so the others row's average,
+ * median and distinct count are taken over its rows rather than over the other groups' summaries. Its group columns
+ * are empty. The others row is left out when nothing is left over.
+ *
+ *   WITH "rows" AS (SELECT *, <group> AS "__wb_g0", ... FROM <dataset> WHERE <filters>),
+ *        "ranked" AS (SELECT <group keys>, row_number() OVER (ORDER BY <sort>) AS "__wb_rank" FROM "rows" GROUP BY <group keys>),
+ *        "kept" AS (SELECT "rows".*, "__wb_rank" FROM "rows" JOIN "ranked" ON <group keys match, empty matching empty>)
+ *   SELECT <columns> FROM (
+ *     SELECT <group keys>, <measures>, false, min("__wb_rank") FROM "kept" WHERE "__wb_rank" <= n GROUP BY <group keys>
+ *     UNION ALL
+ *     SELECT <NULL for each group>, <measures>, true, n + 1 FROM "kept" WHERE "__wb_rank" > n HAVING count(*) > 0
+ *   ) ORDER BY "__wb_order"
+ */
+export function compileTopN(query: Query, schema: ColumnSchema[], opts: QueryOptions = {}): string {
+  const n = query.limit!.n;
+  const names = resultNames(query);
+  const type = (field: string) => columnType(schema, field);
+  const keys = query.groups.map((_, i) => groupKey(i));
+  const measures = query.measures.map((m, i) => `${compileMeasure(m, m.field == null ? '' : type(m.field))} AS ${ident(names.measures[i]!)}`);
+  const where = whereClause(query, schema, opts);
+  const rows = `SELECT *, ${list(query.groups.map((g, i) => `${compileGroup(g, type(g.field))} AS ${keys[i]}`))} FROM ${ident(datasetRelationName({ id: query.datasetId }))}${where ? ` ${where}` : ''}`;
+  const rank = orderTerms(query, (by, i) => (by === 'group' ? keys[i]! : compileMeasure(query.measures[i]!, query.measures[i]!.field == null ? '' : type(query.measures[i]!.field!))));
+  const ranked = `SELECT ${list(keys)}, row_number() OVER (ORDER BY ${list(rank)}) AS "__wb_rank" FROM "rows" GROUP BY ${list(keys)}`;
+  const kept = `SELECT "rows".*, "ranked"."__wb_rank" FROM "rows" JOIN "ranked" ON ${keys.map((k) => `"rows".${k} IS NOT DISTINCT FROM "ranked".${k}`).join(' AND ')}`;
+  const top = `SELECT ${list([...keys.map((k, i) => `${k} AS ${ident(names.groups[i]!)}`), ...measures, `false AS ${ident(OTHERS_COLUMN)}`, 'min("__wb_rank") AS "__wb_order"'])} FROM "kept" WHERE "__wb_rank" <= ${num(n)} GROUP BY ${list(keys)}`;
+  const nulls = query.groups.map((g, i) => `CAST(NULL AS ${groupType(g, type(g.field))}) AS ${ident(names.groups[i]!)}`);
+  const others = `SELECT ${list([...nulls, ...measures, `true AS ${ident(OTHERS_COLUMN)}`, `${num(n + 1)} AS "__wb_order"`])} FROM "kept" WHERE "__wb_rank" > ${num(n)} HAVING count(*) > 0`;
+  const columns = [...names.groups, ...names.measures, OTHERS_COLUMN].map(ident);
+  const limit = opts.maxRows != null ? ` LIMIT ${num(opts.maxRows)}` : '';
+  return `WITH "rows" AS (${rows}), "ranked" AS (${ranked}), "kept" AS (${kept}) SELECT ${list(columns)} FROM (${top} UNION ALL ${others}) ORDER BY "__wb_order"${limit}`;
 }

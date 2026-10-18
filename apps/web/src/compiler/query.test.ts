@@ -114,6 +114,30 @@ describe('compileQuery', () => {
   });
 });
 
+describe('top N with others', () => {
+  it('ranks the groups once, keeps n and summarises the rest as one flagged row', () => {
+    expect(
+      sql(
+        { groups: [{ field: 'Region' }], measures: [{ aggregate: 'sum', field: 'units' }, { aggregate: 'avg', field: 'price' }], sort: [{ by: 'measure', index: 0, dir: 'desc' }], limit: { n: 5, others: true } },
+        { maxRows: 10_001 },
+      ),
+    ).toMatchSnapshot();
+  });
+
+  it('adds the others flag to the result’s columns', () => {
+    const cols = describeQuery(query({ groups: [{ field: 'placed', bucket: { kind: 'date', unit: 'month' } }], measures: [{ aggregate: 'count' }], limit: { n: 3, others: true } }), SALES);
+    expect(cols.map((c) => [c.name, c.type, c.role])).toEqual([
+      ['placed', 'DATE', 'group'],
+      ['Count', 'BIGINT', 'measure'],
+      ['__others', 'BOOLEAN', 'others'],
+    ]);
+  });
+
+  it('is a plain LIMIT without others', () => {
+    expect(sql({ groups: [{ field: 'Region' }], measures: [{ aggregate: 'count' }], limit: { n: 5, others: false } })).not.toMatch(/WITH/);
+  });
+});
+
 describe('describeQuery', () => {
   it('gives each column the type DuckDB will report', () => {
     expect(
