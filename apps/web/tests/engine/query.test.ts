@@ -1,6 +1,6 @@
 // The query compiler on real DuckDB-WASM (Node build): the SQL it writes runs, returns the columns describeQuery
 // promised, and gives the results worked out by hand from the fixture below.
-import type { ColumnSchema, Query } from '@wellyboot/shared';
+import type { ColumnSchema, Query, RelativeDate } from '@wellyboot/shared';
 import { compileQuery, describeQuery, type QueryOptions } from '../../src/compiler/query';
 import { EngineClient, tableRows } from '../../src/engine/client';
 import { createNodeBackend } from '../helpers/nodeBackend';
@@ -169,6 +169,38 @@ describe('filters', () => {
   it('ANDs dashboard filters into the same WHERE', async () => {
     const rows = await run({ measures: [{ aggregate: 'count' }], filters: [{ field: 'paid', op: '=', value: true }] }, { extraFilters: [{ field: 'Region', op: '=', value: 'South' }] });
     expect(rows).toEqual([{ Count: 2 }]);
+  });
+});
+
+describe('relative date filters, with the clock at 2026-03-01', () => {
+  const count = async (field: string, range: RelativeDate, today = '2026-03-01') =>
+    (await run({ measures: [{ aggregate: 'count' }], filters: [{ field, op: 'relative', range }] }, { today }))[0]!.Count;
+
+  it.each<[RelativeDate, number, string]>([
+    [{ kind: 'last', n: 1, unit: 'month' }, 3, 'February: the 2nd, 14th and 28th'],
+    [{ kind: 'last', n: 30, unit: 'day' }, 3, '30 January to 28 February'],
+    [{ kind: 'last', n: 2, unit: 'month' }, 5, 'January and February'],
+    [{ kind: 'last', n: 1, unit: 'week' }, 0, '16 to 22 February'],
+    [{ kind: 'this', unit: 'week' }, 2, 'Monday 23 February to Sunday 1 March'],
+    [{ kind: 'this', unit: 'month' }, 2, 'March'],
+    [{ kind: 'this', unit: 'quarter' }, 7, 'January to March'],
+    [{ kind: 'last', n: 1, unit: 'quarter' }, 0, 'October to December 2025'],
+    [{ kind: 'last', n: 1, unit: 'year' }, 0, '2025'],
+    [{ kind: 'toDate', unit: 'year' }, 6, '1 January to 1 March'],
+    [{ kind: 'toDate', unit: 'month' }, 1, '1 March'],
+  ])('%j counts %i (%s)', async (range, expected) => {
+    expect(await count('placed', range)).toBe(expected);
+  });
+
+  it('counts timestamps by their date, the last second of a month included', async () => {
+    const range: RelativeDate = { kind: 'last', n: 1, unit: 'month' };
+    expect(await count('at', range)).toBe(3);
+    expect(await count('at_tz', range)).toBe(3);
+  });
+
+  it('crosses a year boundary', async () => {
+    expect(await count('placed', { kind: 'last', n: 1, unit: 'year' }, '2027-01-15')).toBe(10);
+    expect(await count('placed', { kind: 'last', n: 1, unit: 'month' }, '2026-06-01')).toBe(1);
   });
 });
 

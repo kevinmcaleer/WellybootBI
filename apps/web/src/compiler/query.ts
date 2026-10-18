@@ -17,6 +17,7 @@
 import type { ColumnSchema, Filter, FilterValue, Group, Measure, Query } from '@wellyboot/shared';
 import { assertQuery, type CheckOptions } from './check';
 import { datasetRelationName } from './datasets';
+import { relativeCondition } from './relative';
 import { bool, ident, list, num, str } from './sql';
 import { AGGREGATE_INFO, asBoolean, asNumber, fieldKind, isDecimalType, isIntegerType, isZonedType } from './types';
 
@@ -150,7 +151,7 @@ export interface FilterOptions {
 }
 
 /** A filter as a condition on its field, as Puddle compiles criteria: text operators ignore case. */
-export function compileFilter(f: Filter, type: string, _opts: FilterOptions = {}): string {
+export function compileFilter(f: Filter, type: string, opts: FilterOptions = {}): string {
   const col = ident(f.field);
   const text = `lower(CAST(${plainTime(col, type)} AS VARCHAR))`;
   switch (f.op) {
@@ -169,7 +170,7 @@ export function compileFilter(f: Filter, type: string, _opts: FilterOptions = {}
     case 'in':
       return f.values.length ? `${col} IN (${list(f.values.map((v) => literal(v, type)))})` : 'false';
     case 'relative':
-      throw new Error('Relative date filters are not compiled yet');
+      return relativeCondition(fieldKind(type) === 'date' ? col : `CAST(${plainTime(col, type)} AS DATE)`, f.range, opts.today);
     default:
       return `${col} ${f.op} ${literal(f.value, type)}`;
   }
