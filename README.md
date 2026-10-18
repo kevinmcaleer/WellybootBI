@@ -34,6 +34,10 @@ docker compose up -d --build
 
 Then open <http://localhost:8090>. The server answers on <http://localhost:8787/healthz>. Copy `.env.example` to `.env` to change ports or add the Cloudflare Tunnel's token. See [deploy/README.md](deploy/README.md).
 
+## Why Vega-Lite
+
+Charts are drawn with [Vega-Lite](https://vega.github.io/vega-lite/) (through `vega-embed`), chosen over ECharts in Phase 4. A chart is a small JSON spec the app compiles from a visual (`apps/web/src/compiler/chart/`), so the same spec can be published, embedded and checked against Vega-Lite's schema in tests. The numbers in it come from DuckDB already summarised: Vega-Lite only draws them, and never aggregates.
+
 ## Why a monorepo
 
 Puddle is one package because it is browser-only. Wellyboot BI also has a small server for publishing, share links and embeds, and the browser and the server must agree on the shape of datasets, queries and dashboards. So it is an npm workspaces monorepo, with those schemas in one shared package that both apps import.
@@ -42,7 +46,7 @@ Puddle is one package because it is browser-only. Wellyboot BI also has a small 
 
 | Path | What lives there |
 |---|---|
-| `packages/shared/` | Zod schemas shared by the web app and the server (datasets, the query model), the `.wellyboot.json` format version and its migrations |
+| `packages/shared/` | Zod schemas shared by the web app and the server (datasets, the query model, visuals), the `.wellyboot.json` format version and its migrations |
 | `apps/web/` | The Wellyboot BI web app (Vite, React, TypeScript), local-first on DuckDB-WASM |
 | `apps/web/src/design-system/` | Tokens, Tailwind preset and component CSS, vendored from Puddle; `design-system.lock.json` pins it and `npm run design-system -- check\|sync <puddle-checkout>` compares or re-copies it |
 | `apps/web/src/ui/` | The design system's components in TypeScript (`Button`, `Dialog`, `Menu`, `Field`, `Toolbar`, `StatusStrip` and the rest), ported from Puddle, and how numbers and dates are shown (`locale.ts`, `format.ts`) |
