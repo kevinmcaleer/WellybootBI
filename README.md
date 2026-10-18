@@ -4,7 +4,7 @@ An open source business intelligence tool for data curated in [Puddle](https://g
 
 Nothing leaves your browser until you publish.
 
-How to bring data in from Puddle: [docs/sources.md](docs/sources.md). Work in progress: the plan is in the [epic](https://github.com/kevinmcaleer/WellybootBI/issues/11).
+How to bring data in from Puddle: [docs/sources.md](docs/sources.md). How charts ask for their data: [docs/queries.md](docs/queries.md). Work in progress: the plan is in the [epic](https://github.com/kevinmcaleer/WellybootBI/issues/11).
 
 ## Development
 
@@ -42,13 +42,14 @@ Puddle is one package because it is browser-only. Wellyboot BI also has a small 
 
 | Path | What lives there |
 |---|---|
-| `packages/shared/` | Zod schemas shared by the web app and the server, the `.wellyboot.json` format version and its migrations |
+| `packages/shared/` | Zod schemas shared by the web app and the server (datasets, the query model), the `.wellyboot.json` format version and its migrations |
 | `apps/web/` | The Wellyboot BI web app (Vite, React, TypeScript), local-first on DuckDB-WASM |
 | `apps/web/src/design-system/` | Tokens, Tailwind preset and component CSS, vendored from Puddle; `design-system.lock.json` pins it and `npm run design-system -- check\|sync <puddle-checkout>` compares or re-copies it |
 | `apps/web/src/ui/` | The design system's components in TypeScript (`Button`, `Dialog`, `Menu`, `Field`, `Toolbar`, `StatusStrip` and the rest), ported from Puddle, and how numbers and dates are shown (`locale.ts`, `format.ts`) |
 | `apps/web/src/app/` | The app shell: toolbar, screens and hash routes, status strip, theme, engine boot, keyboard shortcuts |
 | `apps/web/src/engine/` | DuckDB-WASM in a Web Worker and the typed `EngineClient` (priorities, cancellation, Stop, plain-word errors), ported from Puddle |
-| `apps/web/src/compiler/` | The only place SQL is written (`datasets.ts` registers a dataset as a view or table, `profile.ts` profiles its fields); identifiers and literals are quoted through `sql.ts` |
+| `apps/web/src/compiler/` | The only place SQL is written (`datasets.ts` registers a dataset as a view or table, `profile.ts` profiles its fields, `query.ts` turns a visual's query into one SELECT, `relative.ts` its relative dates, `check.ts` and `types.ts` what fits which field); identifiers and literals are quoted through `sql.ts`, and `tests/sql-in-compiler.test.ts` fails on SQL written anywhere else |
+| `apps/web/src/queries/` | Running a visual's query: the result cache, cancelling a superseded query, the row limit, and formatting hints for each column |
 | `apps/web/src/datasets/` | Datasets: format detection, https addresses, OPFS storage and file handles, the IndexedDB catalogue, field types, profiles, Puddle provenance, and the data source picker |
 | `apps/web/src/home/` | The dashboards home screen |
 | `apps/web/src/editor/` | The dashboard editor: canvas and inspector |

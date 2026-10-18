@@ -2,7 +2,7 @@ import type { ColumnSchema, Query } from '@wellyboot/shared';
 import { tableFromArrays, type Table } from 'apache-arrow';
 import { CompileError } from '../compiler/errors';
 import { EngineError, isCancelled, type QueryOptions, type QueryResult } from '../engine';
-import { QueryCache, datasetVersion, runQuery, type QueryEngine } from './run';
+import { QueryCache, datasetVersion, runDatasetQuery, runQuery, type QueryEngine } from './run';
 
 const SCHEMA: ColumnSchema[] = [
   { name: 'Region', type: 'VARCHAR' },
@@ -109,6 +109,20 @@ describe('runQuery', () => {
       new CompileError([{ part: 'measure', index: 0, field: 'Region', message: 'Sum needs a number; Region is text' }]),
     );
     expect(engine.calls).toHaveLength(0);
+  });
+});
+
+describe('runDatasetQuery', () => {
+  const dataset = { id: 'a1b2c3d4e5f6', name: 'Orders', fileName: 'o.csv', format: 'csv' as const, schema: SCHEMA, rowCount: 3, headHash: 'a'.repeat(64), size: 1, storage: 'opfs' as const, addedAt: '2026-10-18T09:00:00.000Z', updatedAt: '2026-10-18T09:00:00.000Z' };
+
+  it('runs a query over the dataset it names, with that dataset’s columns', async () => {
+    const run = await runDatasetQuery(new FakeEngine(), [dataset], { datasetId: dataset.id, groups: [{ field: 'Region' }], measures: [{ aggregate: 'sum', field: 'units' }] });
+    expect(run.rows).toHaveLength(3);
+  });
+
+  it('refuses a query over a dataset this browser doesn’t have, or one that isn’t a query', async () => {
+    await expect(runDatasetQuery(new FakeEngine(), [], { datasetId: 'zzzzzzzzzz', measures: [{ aggregate: 'count' }] })).rejects.toThrow("There's no dataset zzzzzzzzzz in this browser");
+    await expect(runDatasetQuery(new FakeEngine(), [dataset], { datasetId: dataset.id, measures: [{ aggregate: 'mode' as 'sum' }] })).rejects.toThrow();
   });
 });
 

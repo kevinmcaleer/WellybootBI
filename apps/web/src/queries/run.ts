@@ -2,7 +2,7 @@
 // by compiled SQL and dataset version, so redrawing a dashboard runs nothing twice. Each visual has one query in
 // flight: a newer one (the author typing in a filter) cancels the one before. A visual shows at most the row limit,
 // so a line over a million-row group never freezes the tab; one row more is fetched to know whether to say so.
-import type { ColumnSchema, Dataset, Query } from '@wellyboot/shared';
+import { QueryZ, type ColumnSchema, type Dataset, type Query, type QueryInput } from '@wellyboot/shared';
 import { compileQuery, describeQuery, type QueryOptions as CompileOptions, type ResultColumn } from '../compiler/query';
 import { tableRows, type QueryOptions, type QueryResult } from '../engine';
 import { fullCount } from '../ui/format';
@@ -121,4 +121,15 @@ export async function runQuery(engine: QueryEngine, query: Query, schema: Column
   } finally {
     if (visualId && inFlight.get(visualId) === controller) inFlight.delete(visualId);
   }
+}
+
+/**
+ * Run a query over one of the datasets in this browser, by the id it names: its columns and version come from the
+ * dataset library. What a visual will call; for now the Playwright tests call it through window.__wellyboot.
+ */
+export async function runDatasetQuery(engine: QueryEngine, datasets: readonly Dataset[], input: QueryInput, opts: Omit<RunOptions, 'datasetVersion'> = {}): Promise<QueryRun> {
+  const query = QueryZ.parse(input);
+  const ds = datasets.find((d) => d.id === query.datasetId);
+  if (!ds) throw new Error(`There's no dataset ${query.datasetId} in this browser`);
+  return runQuery(engine, query, ds.schema, { ...opts, datasetVersion: datasetVersion(ds) });
 }

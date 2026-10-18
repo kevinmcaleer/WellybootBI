@@ -1,5 +1,5 @@
 import type { Table } from 'apache-arrow';
-import { disableOptimizers } from '../compiler/sql';
+import { describeOf, disableOptimizers } from '../compiler/sql';
 import { EngineError, toEngineError } from './errors';
 import { Scheduler } from './scheduler';
 import type { Activity, ColumnSchema, DuckBackend, EngineInfo, OutputFile, QueryOptions, QueryResult } from './types';
@@ -112,7 +112,7 @@ export class EngineClient {
   /** Column names and DuckDB types of a query's result, without running it over the data. */
   describe(sql: string, opts: QueryOptions = {}): Promise<ColumnSchema[]> {
     return this.scheduler.submit(async (signal) => {
-      const table = await this.run(`DESCRIBE ${sql}`, signal);
+      const table = await this.run(describeOf(sql), signal);
       return tableRows(table).map((r) => ({ name: String(r.column_name), type: String(r.column_type) }));
     }, { label: 'Reading columns', ...opts });
   }

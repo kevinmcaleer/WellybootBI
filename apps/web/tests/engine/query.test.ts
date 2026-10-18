@@ -1,6 +1,8 @@
 // The query compiler on real DuckDB-WASM (Node build): the SQL it writes runs, returns the columns describeQuery
 // promised, and gives the results worked out by hand from the fixture below.
-import type { ColumnSchema, Query, RelativeDate } from '@wellyboot/shared';
+import { AGGREGATES, COMPARE_OPS, DATE_BUCKETS, type ColumnSchema, type Filter, type Group, type Measure, type Query, type RelativeDate } from '@wellyboot/shared';
+import fc from 'fast-check';
+import { AGGREGATE_INFO, bucketProblem, fieldKind } from '../../src/compiler/types';
 import { compileQuery, describeQuery, type QueryOptions } from '../../src/compiler/query';
 import { EngineClient, tableRows } from '../../src/engine/client';
 import { createNodeBackend } from '../helpers/nodeBackend';
@@ -231,5 +233,67 @@ describe('quoting', () => {
       { 'Représentant « vente » 売上': 'Cy', "Ventes d'été": 1 },
       { 'Représentant « vente » 売上': 'Dee', "Ventes d'été": 1 },
     ]);
+  });
+});
+
+describe('generated queries', () => {
+  /** Any query that fits the sales dataset: fields it has, summaries and buckets that suit them, values of their kind. */
+  const fitting = () => {
+    const field = fc.constantFrom(...SALES.map((c) => c.name));
+    const typeOf = (name: string) => SALES.find((c) => c.name === name)!.type;
+    const group: fc.Arbitrary<Group> = fc
+      .record({
+        field,
+        bucket: fc.option(fc.oneof(fc.record({ kind: fc.constant('date' as const), unit: fc.constantFrom(...DATE_BUCKETS) }), fc.record({ kind: fc.constant('bin' as const), width: fc.constantFrom(0.5, 2, 10) })), { nil: undefined }),
+      })
+      .filter((g) => !g.bucket || !bucketProblem(g.bucket, g.field, typeOf(g.field)))
+      .map(({ field, bucket }) => (bucket ? { field, bucket } : { field }));
+    const measure: fc.Arbitrary<Measure> = fc.oneof(
+      fc.constant({ aggregate: 'count' as const }),
+      fc.record({ aggregate: fc.constantFrom(...AGGREGATES), field }).filter((m) => AGGREGATE_INFO[m.aggregate].fits(typeOf(m.field))),
+    );
+    const sample: Record<string, unknown[]> = {
+      number: [0, 5, '7.5'],
+      text: ['North', "O'Brien's", ''],
+      date: ['2026-02-14'],
+      datetime: ['2026-02-14 10:30:00', '2026-03-01'],
+      boolean: [true, 'false'],
+    };
+    const filter: fc.Arbitrary<Filter> = field.chain((f): fc.Arbitrary<Filter> => {
+      const kind = fieldKind(typeOf(f));
+      const value = fc.constantFrom(...(sample[kind] as Array<string | number | boolean>));
+      return fc.oneof(
+        fc.record({ field: fc.constant(f), op: fc.constantFrom(...COMPARE_OPS), value }),
+        fc.record({ field: fc.constant(f), op: fc.constantFrom('contains' as const, 'starts' as const, 'ends' as const), value: fc.string({ maxLength: 3 }) }),
+        fc.record({ field: fc.constant(f), op: fc.constantFrom('empty' as const, 'notEmpty' as const) }),
+        fc.record({ field: fc.constant(f), op: fc.constant('in' as const), values: fc.array(value, { maxLength: 3 }) }),
+        fc.record({ field: fc.constant(f), op: fc.constant('between' as const), from: value, to: value }),
+        ...(kind === 'date' || kind === 'datetime'
+          ? [fc.record({ field: fc.constant(f), op: fc.constant('relative' as const), range: fc.constant<RelativeDate>({ kind: 'last', n: 2, unit: 'month' }) })]
+          : []),
+      );
+    });
+    return fc
+      .record({ groups: fc.array(group, { maxLength: 2 }), measures: fc.array(measure, { maxLength: 3 }), filters: fc.array(filter, { maxLength: 2 }), others: fc.boolean(), n: fc.option(fc.integer({ min: 1, max: 4 }), { nil: undefined }), desc: fc.boolean() })
+      .filter((q) => q.groups.length + q.measures.length > 0)
+      .map(
+        (q): Query =>
+          query({
+            groups: q.groups,
+            measures: q.measures,
+            filters: q.filters,
+            sort: q.measures.length ? [{ by: 'measure', index: 0, dir: q.desc ? 'desc' : 'asc' }] : [],
+            ...(q.n != null && { limit: { n: q.n, others: q.others && q.groups.length > 0 } }),
+          }),
+      );
+  };
+
+  it('compile to SQL DuckDB accepts, returning the columns describeQuery promised', async () => {
+    await fc.assert(
+      fc.asyncProperty(fitting(), async (q) => {
+        await run(q, { today: '2026-03-01', maxRows: 50 });
+      }),
+      { numRuns: 150 },
+    );
   });
 });
