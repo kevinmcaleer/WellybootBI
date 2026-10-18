@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { EditorScreen } from '../editor/EditorScreen';
 import { HomeScreen } from '../home/HomeScreen';
+import { useVisualStore } from '../model/visualStore';
 import { Button, Menu, StatusBadge, StatusStrip, Toolbar } from '../ui';
 import { useEngineStore, type EngineStatus } from './engine';
 import { followHash, useSession } from './session';
@@ -43,6 +44,8 @@ export function AppShell() {
     help: () => useSession.getState().setShortcutsOpen(true),
     theme: theme.cycle,
     home: () => useSession.getState().navigate({ screen: 'home' }),
+    undo: () => useVisualStore.getState().undo(),
+    redo: () => useVisualStore.getState().redo(),
   });
 
   return (
