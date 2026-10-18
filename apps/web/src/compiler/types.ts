@@ -33,6 +33,9 @@ export function decimalScale(type: string): number | undefined {
   return undefined;
 }
 
+/** TIMESTAMP WITH TIME ZONE: its date functions need DuckDB's icu extension, which the app doesn't load. */
+export const isZonedType = (type: string) => /^TIMESTAMP\s*WITH\s*TIME\s*ZONE$|^TIMESTAMPTZ$/i.test(type.trim());
+
 export const isDecimalType = (type: string) => /^DECIMAL/i.test(type.trim());
 
 interface AggregateInfo {

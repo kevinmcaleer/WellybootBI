@@ -1,0 +1,5 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compileQuery > buckets dates by month as DATEs, hours as TIMESTAMPs, and numbers into bins 1`] = `"SELECT CAST(date_trunc('month', "placed") AS DATE) AS "placed", date_trunc('hour', "at") AS "at", floor(CAST("price" AS DOUBLE) / 10) * 10 AS "Price band", count(*) AS "Count" FROM "ds_a1b2c3d4e5f6" GROUP BY 1, 2, 3 ORDER BY "placed" ASC NULLS LAST, "at" ASC NULLS LAST, "Price band" ASC NULLS LAST"`;
+
+exports[`compileQuery > writes every aggregate 1`] = `"SELECT CAST(sum("amount") AS DOUBLE) AS "Sum of amount", avg(CAST("units" AS DOUBLE)) AS "Average of units", median(CAST("price" AS DOUBLE)) AS "Median of price", CAST(min("amount") AS DOUBLE) AS "Min of amount", max("placed") AS "Max of placed", count("Region") AS "Count of Region", count(DISTINCT "Region") AS "Count distinct of Region" FROM "ds_a1b2c3d4e5f6""`;
