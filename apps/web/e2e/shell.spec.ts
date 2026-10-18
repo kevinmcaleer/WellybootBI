@@ -34,6 +34,8 @@ test('the theme switch cycles system, light and dark, and the choice survives a 
 test('the editor opens from the home screen, and Back returns', async ({ page }) => {
   await openApp(page);
   await page.getByRole('button', { name: 'New dashboard' }).click();
+  // The data source picker opens first; closing it shows the canvas.
+  await page.getByRole('dialog', { name: 'Data sources' }).getByRole('button', { name: 'Close' }).click();
   await expect(page.getByRole('main', { name: 'Canvas' })).toBeVisible();
   await page.goBack();
   await expect(page.getByRole('heading', { name: 'Dashboards', exact: true })).toBeVisible();
