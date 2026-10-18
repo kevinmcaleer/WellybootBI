@@ -20,6 +20,19 @@
   }
 }
 
+/* Chart tooltips (vega-tooltip's element, given the "wellyboot" theme in visuals/Chart.tsx), as a popover. */
+@layer components {
+  #vg-tooltip-element.wellyboot-theme {
+    @apply rounded-md border border-line bg-surface-raised px-2 py-1 font-ui text-label text-ink shadow-lift;
+  }
+  #vg-tooltip-element.wellyboot-theme td.key {
+    @apply pr-2 text-ink-muted;
+  }
+  #vg-tooltip-element.wellyboot-theme td.value {
+    @apply font-mono;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
