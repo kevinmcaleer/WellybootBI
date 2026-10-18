@@ -4,7 +4,7 @@ An open source business intelligence tool for data curated in [Puddle](https://g
 
 Nothing leaves your browser until you publish.
 
-How to bring data in from Puddle: [docs/sources.md](docs/sources.md). How charts ask for their data: [docs/queries.md](docs/queries.md). Work in progress: the plan is in the [epic](https://github.com/kevinmcaleer/WellybootBI/issues/11).
+How to bring data in from Puddle: [docs/sources.md](docs/sources.md). How charts ask for their data: [docs/queries.md](docs/queries.md). Building a chart: [docs/visuals.md](docs/visuals.md). Work in progress: the plan is in the [epic](https://github.com/kevinmcaleer/WellybootBI/issues/11).
 
 ## Development
 
@@ -56,7 +56,10 @@ Puddle is one package because it is browser-only. Wellyboot BI also has a small 
 | `apps/web/src/queries/` | Running a visual's query: the result cache, cancelling a superseded query, the row limit, and formatting hints for each column |
 | `apps/web/src/datasets/` | Datasets: format detection, https addresses, OPFS storage and file handles, the IndexedDB catalogue, field types, profiles, Puddle provenance, and the data source picker |
 | `apps/web/src/home/` | The dashboards home screen |
-| `apps/web/src/editor/` | The dashboard editor: canvas and inspector |
+| `apps/web/src/compiler/chart/` | The chart compiler: a visual and its rows to a Vega-Lite spec (`bar.ts`, `line.ts`, `pie.ts`), themed from the design-system tokens (`theme.ts`) |
+| `apps/web/src/visuals/` | Charts on screen: the encoding rules for wells and switching chart type (`encode.ts`), the Vega renderer (`Chart.tsx`), the live query (`live.ts`) and export |
+| `apps/web/src/model/` | The visual store with undo and redo (`history.ts` is Puddle's) |
+| `apps/web/src/editor/` | The chart editor: fields, wells, filters, sort and format, the chart and its data |
 | `apps/web/tests/` | Engine integration tests on the Node build of DuckDB-WASM (Parquet and JSON tests load the extensions `npm run fetch-extensions` downloads), fixtures and helpers |
 | `apps/web/e2e/` | Playwright tests, with axe for accessibility |
 | `apps/web/scripts/` | `fetch-duckdb-extensions.mjs`: DuckDB's json and parquet extensions for the build to serve |
