@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
-import { applyTheme, useTheme } from './theme';
+import { applyTheme, resolveTheme, useTheme } from './theme';
 
 afterEach(() => useTheme.getState().setPreference('system'));
 
@@ -24,5 +24,12 @@ describe('theme', () => {
   it('cycles system, light, dark', () => {
     const seen = [1, 2, 3].map(() => (useTheme.getState().cycle(), useTheme.getState().preference));
     expect(seen).toEqual(['light', 'dark', 'system']);
+  });
+
+  it('resolves the theme on screen from the preference and the system', () => {
+    expect(resolveTheme('system', true)).toBe('dark');
+    expect(resolveTheme('system', false)).toBe('light');
+    expect(resolveTheme('light', true)).toBe('light');
+    expect(resolveTheme('dark', false)).toBe('dark');
   });
 });

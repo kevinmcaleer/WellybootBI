@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import { create } from 'zustand';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -44,3 +45,21 @@ export const useTheme = create<ThemeState>((set, get) => ({
 
 export const THEME_LABEL: Record<ThemePreference, string> = { system: 'Theme: match system', light: 'Theme: light', dark: 'Theme: dark' };
 export const THEME_ICON = { system: 'monitor', light: 'sun', dark: 'moon' } as const;
+
+/** The theme on screen: a manual pick, or the system's when following it. Charts, drawn on canvas, need to know. */
+export const resolveTheme = (pref: ThemePreference, systemDark: boolean): 'light' | 'dark' => (pref === 'system' ? (systemDark ? 'dark' : 'light') : pref);
+
+const DARK_QUERY = '(prefers-color-scheme: dark)';
+const darkMedia = () => (typeof matchMedia === 'undefined' ? undefined : matchMedia(DARK_QUERY));
+const subscribeSystem = (onChange: () => void) => {
+  const m = darkMedia();
+  m?.addEventListener('change', onChange);
+  return () => m?.removeEventListener('change', onChange);
+};
+
+/** The theme on screen, following both the preference and the system. */
+export function useResolvedTheme(): 'light' | 'dark' {
+  const preference = useTheme((s) => s.preference);
+  const systemDark = useSyncExternalStore(subscribeSystem, () => !!darkMedia()?.matches, () => false);
+  return resolveTheme(preference, systemDark);
+}

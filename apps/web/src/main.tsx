@@ -5,6 +5,7 @@ import { bootEngine, useEngineStore } from './app/engine';
 import { applyTheme, useTheme } from './app/theme';
 import { useDatasets } from './datasets/library';
 import { runDatasetQuery } from './queries/run';
+import { chartView } from './visuals/view';
 import './index.css';
 
 applyTheme(useTheme.getState().preference);
@@ -17,6 +18,9 @@ useEngineStore.subscribe((s) => {
     (globalThis as { __wellyboot?: unknown }).__wellyboot = {
       engine,
       runQuery: (query: Parameters<typeof runDatasetQuery>[2], opts?: Parameters<typeof runDatasetQuery>[3]) => runDatasetQuery(engine, useDatasets.getState().datasets, query, opts),
+      // The chart on screen's points, as the chart compiler gave them to Vega.
+      chartData: () => chartView()?.data('source_0') ?? null,
+      chartView,
     };
   }
 });

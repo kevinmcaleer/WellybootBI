@@ -19,7 +19,9 @@
     "src/ui/LiveRegion.tsx": "ceadd00e57b5b08e8699d61ddd4197c9837c228b51fef4519e9b072e155aa242",
     "src/ui/Menu.test.tsx": "3821211f71185746958c192562e06bf815afd801432bd2666869538050ec2ba0",
     "src/ui/Menu.tsx": "76093bb55a889ad1997bcb57767df0a3431f7a310a836b0f1912d8201bc8a256",
+    "src/ui/Pivot.tsx": "cf339924fa07739f042dca444d1dfec5a5919d43d1bce9b149e6cad42c7b65f9",
     "src/ui/QualityBar.tsx": "4257688ef8dabce72eb6d68f66541c48c158a6b2c2a2c289fd7ef638497759f9",
+    "src/ui/Section.tsx": "0b0b3ac24ad2ab30c79f3f7db106251e5df6b72f65ebba24325e8947ce85362b",
     "src/ui/StatusBadge.tsx": "8f1dd88ac19245181eb7defba8ef74543c36a44ee7a6ead5b3539ad5b9c82100",
     "src/ui/Toolbar.tsx": "2fcacba3886320338c7c1a5e57423073020c59dc98e32cfc58ddf8fb9f07ebf3",
     "src/ui/TypeTag.tsx": "34c22b81ed7daf33875c3a80bc75f11f00a9467eefb971611a9575932c113083",
@@ -28,6 +30,7 @@
     "src/ui/cx.ts": "3c284ee4a128f6b6cdb07df10c158502d91a740fb0022cd22d26e8d4269d46fe",
     "src/ui/format.test.ts": "86c4404647733e271f1d5a3a830bb951133f09f5777fbd711b36d3da0af3b762",
     "src/ui/format.ts": "257500f7d1fbc76daafcbec94c0c3ac90d0ca833e992829e662350afafb2aca5",
+    "src/ui/glideTheme.ts": "537d5a10d370445615d46e02c7a12352aabbd84114a7a7f954b7355fba294529",
     "src/ui/locale.test.ts": "6a4ce1e47ba1d50c22d34377f191656cfe3ed156cc1d4e35b12abed4257dab04",
     "src/ui/locale.ts": "2c5010cec316eef9b96b2bcbf3f5180c0c3cd9d45b1b57ab677bf1962d15aaf4",
     "src/ui/menuGroups.ts": "894038054cddbc59903458eab78c9b6c69680bbfecc598173de599cac6cc8ca3"
