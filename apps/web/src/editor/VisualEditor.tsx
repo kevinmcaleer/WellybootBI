@@ -7,11 +7,12 @@ import { chartDefinition, chartProblem, compileChart } from '../compiler/chart';
 import { profileDataset, type DatasetProfile } from '../datasets/profile';
 import { useVisualStore } from '../model/visualStore';
 import { fullCount } from '../ui/format';
-import { Banner, Button, Field, Section, Select, Tabs, useDisplayFormat } from '../ui';
+import { announce, Banner, Button, Field, Menu, Section, Select, Tabs, useDisplayFormat, type MenuItem } from '../ui';
 import { Chart } from '../visuals/Chart';
 import { addToWell, retarget, type FieldRef } from '../visuals/encode';
 import { LiveQuery, liveKey, useLiveRun } from '../visuals/live';
-import { setChartView } from '../visuals/view';
+import { copyText, exportChart, type ImageFormat } from '../visuals/export';
+import { chartView, setChartView } from '../visuals/view';
 import { DataView } from './DataView';
 import { FieldList, type Target } from './FieldList';
 import { FilterEditor } from './FilterEditor';
@@ -73,6 +74,22 @@ function useLiveChart(visual: Visual, dataset: Dataset) {
   const [last, setLast] = useState<TopLevelSpec>();
   if (spec && spec !== last) setLast(spec);
   return { live, current, spec: spec ?? (live.running ? last : undefined) };
+}
+
+/** Download the chart, or copy the SQL its rows came from. */
+function ChartActions({ visual, sql, drawn }: { visual: Visual; sql?: string; drawn: boolean }) {
+  const fail = (e: unknown) => useVisualStore.getState().setNote({ tone: 'fail', text: e instanceof Error ? e.message : String(e) });
+  const download = (format: ImageFormat) => {
+    const view = chartView();
+    if (!view) return;
+    exportChart(view, visual.name, format).then(() => announce(`Downloaded the chart as ${format.toUpperCase()}`), fail);
+  };
+  const items: MenuItem[] = [
+    { label: 'Download PNG', icon: 'export', disabled: !drawn, onSelect: () => download('png') },
+    { label: 'Download SVG', icon: 'export', disabled: !drawn, onSelect: () => download('svg') },
+    { label: 'Copy SQL', icon: 'code', disabled: !sql, onSelect: () => sql && copyText(sql).then(() => announce('Copied the chart’s SQL'), fail) },
+  ];
+  return <Menu label="Export" items={items} button={{ variant: 'ghost', icon: 'export', size: 'sm' }} />;
 }
 
 /** The chart type switcher: switching keeps what fits and says what didn't. */
@@ -168,6 +185,7 @@ export function VisualEditor({ visual, dataset, onChangeDataset }: { visual: Vis
             onChange={(id) => setTab(id as 'chart' | 'data')}
           />
           <div className="ml-auto flex items-center gap-1">
+            <ChartActions visual={visual} sql={current?.sql} drawn={!!spec && tab === 'chart'} />
             <Button variant="ghost" icon="undo" iconOnly aria-label="Undo" title="Undo" disabled={!canUndo} onClick={() => store().undo()} />
             <Button variant="ghost" icon="redo" iconOnly aria-label="Redo" title="Redo" disabled={!canRedo} onClick={() => store().redo()} />
           </div>
