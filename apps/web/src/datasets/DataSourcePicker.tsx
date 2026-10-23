@@ -60,8 +60,11 @@ function ReconnectBanner() {
   );
 }
 
-/** The data source picker: the datasets in this browser, newest first, and the one selected. */
-export function DataSourcePicker({ onClose }: { onClose: () => void }) {
+/**
+ * The data source picker: the datasets in this browser, newest first, and the one selected. With `onUse`, the panel
+ * offers to chart the selected dataset.
+ */
+export function DataSourcePicker({ onClose, onUse }: { onClose: () => void; onUse?: (dataset: Dataset) => void }) {
   const loaded = useDatasets((s) => s.loaded);
   const datasets = useDatasets((s) => s.datasets);
   const attach = useDatasets((s) => s.attach);
@@ -117,6 +120,7 @@ export function DataSourcePicker({ onClose }: { onClose: () => void }) {
               {selected ? (
                 <DatasetPanel
                   dataset={selected}
+                  onUse={onUse && attach[selected.id]?.state === 'ready' ? () => onUse(selected) : undefined}
                   onRename={() => setSub({ kind: 'rename', dataset: selected })}
                   onReplace={() => setSub({ kind: 'replace', dataset: selected })}
                   onDelete={() => setSub({ kind: 'delete', dataset: selected })}

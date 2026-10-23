@@ -7,6 +7,7 @@ import { useEngineStore } from './engine';
 import { useSession } from './session';
 import { SHORTCUTS } from './shortcuts';
 import { useTheme } from './theme';
+import { useLiveRun } from '../visuals/live';
 
 beforeAll(() => {
   // jsdom has <dialog> but not its modal methods.
@@ -23,12 +24,22 @@ afterEach(() => {
   useSession.setState({ route: { screen: 'home' }, shortcutsOpen: false });
   useEngineStore.setState({ status: { state: 'loading' }, engine: null });
   useTheme.getState().setPreference('system');
+  useLiveRun.setState({ running: false, run: undefined });
   location.hash = '';
 });
 
 const key = (init: KeyboardEventInit) => act(() => void window.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })));
 
 describe('the app shell', () => {
+  it('shows the chart’s rows and how long they took in the status strip, in the editor only', () => {
+    useLiveRun.setState({ running: false, run: { sql: '', columns: [{}, {}] as never, rows: [{}, {}, {}, {}], truncated: false, rowLimit: 10_000, elapsedMs: 12 } });
+    render(<AppShell />);
+    expect(screen.getAllByRole('status').some((s) => s.textContent?.includes('4 rows'))).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'New dashboard' }));
+    const strip = screen.getAllByRole('status').find((s) => s.textContent?.includes('4 rows'));
+    expect(strip).toHaveTextContent('2 cols');
+  });
+
   it('opens on the home screen, with an empty list of dashboards', () => {
     render(<AppShell />);
     expect(screen.getByRole('heading', { name: 'Dashboards' })).toBeInTheDocument();

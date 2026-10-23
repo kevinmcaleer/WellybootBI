@@ -12,9 +12,9 @@ export interface KeyCombo {
   anyShift?: boolean;
 }
 
-export type ShortcutArea = 'General';
+export type ShortcutArea = 'General' | 'Chart editor';
 
-export const SHORTCUT_AREAS: ShortcutArea[] = ['General'];
+export const SHORTCUT_AREAS: ShortcutArea[] = ['General', 'Chart editor'];
 
 export interface Shortcut {
   id: ShortcutId;
@@ -29,6 +29,8 @@ export const SHORTCUTS = [
   { id: 'help', area: 'General', label: 'Show keyboard shortcuts', keys: [k('?', { anyShift: true })] },
   { id: 'theme', area: 'General', label: 'Switch theme: system, light, dark', keys: [k('t', { shift: true })] },
   { id: 'home', area: 'General', label: 'Go to all dashboards', keys: [k('h', { shift: true })] },
+  { id: 'undo', area: 'Chart editor', label: 'Undo', keys: [k('z', { mod: true })] },
+  { id: 'redo', area: 'Chart editor', label: 'Redo', keys: [k('z', { mod: true, shift: true }), k('y', { mod: true })] },
 ] as const satisfies ReadonlyArray<Omit<Shortcut, 'id'> & { id: string }>;
 
 export type ShortcutId = (typeof SHORTCUTS)[number]['id'];

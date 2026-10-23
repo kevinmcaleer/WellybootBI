@@ -121,7 +121,7 @@ function FieldRow({ name, type, profile, rows }: { name: string; type: string; p
 }
 
 /** One dataset: what it holds, field by field, where it came from, and what can be done with it. */
-export function DatasetPanel({ dataset, onRename, onReplace, onDelete }: { dataset: Dataset; onRename: () => void; onReplace: () => void; onDelete: () => void }) {
+export function DatasetPanel({ dataset, onRename, onReplace, onDelete, onUse }: { dataset: Dataset; onRename: () => void; onReplace: () => void; onDelete: () => void; onUse?: () => void }) {
   const attach = useDatasets((s) => s.attach[dataset.id]);
   const engine = useEngineStore((s) => s.engine);
   // The profile of the dataset as it is now: one replaced or chosen again is profiled afresh.
@@ -154,6 +154,11 @@ export function DatasetPanel({ dataset, onRename, onReplace, onDelete }: { datas
           </p>
         </div>
         <div className="ml-auto flex shrink-0 gap-1">
+          {onUse && (
+            <Button size="sm" variant="primary" icon="plus" onClick={onUse}>
+              Chart this dataset
+            </Button>
+          )}
           <Button size="sm" variant="ghost" onClick={onRename}>
             Rename
           </Button>

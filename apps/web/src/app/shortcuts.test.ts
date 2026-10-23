@@ -15,6 +15,12 @@ describe('shortcuts', () => {
     expect(shortcutFor(press('t'), false)).toBeUndefined();
   });
 
+  it('undoes with Mod+Z and redoes with Mod+Shift+Z or Mod+Y', () => {
+    expect(shortcutFor(press('z', { ctrlKey: true }), false)?.id).toBe('undo');
+    expect(shortcutFor(press('Z', { ctrlKey: true, shiftKey: true }), false)?.id).toBe('redo');
+    expect(shortcutFor(press('y', { metaKey: true }), true)?.id).toBe('redo');
+  });
+
   it('treats Cmd as Mod on a Mac and Ctrl elsewhere', () => {
     const combo = { key: 'z', mod: true };
     expect(matches(press('z', { metaKey: true }), combo, true)).toBe(true);
