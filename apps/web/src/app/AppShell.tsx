@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react';
 import { EditorScreen } from '../editor/EditorScreen';
 import { HomeScreen } from '../home/HomeScreen';
 import { useVisualStore } from '../model/visualStore';
+import { AppSwitcher } from '../powertools/AppSwitcher';
 import { Button, Menu, StatusBadge, StatusStrip, Toolbar } from '../ui';
 import { useLiveRun } from '../visuals/live';
 import { useEngineStore, type EngineStatus } from './engine';
@@ -58,7 +59,7 @@ export function AppShell() {
 
   return (
     <div className="grid h-full grid-rows-[auto_minmax(0,1fr)_auto] bg-surface-canvas text-body text-ink" data-testid="app-shell">
-      <Toolbar brand="Wellyboot BI" project={route.screen === 'editor' ? 'Untitled dashboard' : undefined}>
+      <Toolbar brand="Wellyboot BI" switcher={<AppSwitcher />} project={route.screen === 'editor' ? 'Untitled dashboard' : undefined}>
         {route.screen === 'editor' && (
           <Button variant="ghost" icon="arrow-left" onClick={() => useSession.getState().navigate({ screen: 'home' })}>
             All dashboards
