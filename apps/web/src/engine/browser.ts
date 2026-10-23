@@ -4,7 +4,7 @@ import mvpWorker from '@duckdb/duckdb-wasm/dist/duckdb-browser-mvp.worker.js?url
 import ehWasm from '@duckdb/duckdb-wasm/dist/duckdb-eh.wasm?url';
 import mvpWasm from '@duckdb/duckdb-wasm/dist/duckdb-mvp.wasm?url';
 import { Table, type RecordBatch } from 'apache-arrow';
-import { setExtensionRepository } from '../compiler/sql';
+import { setExtensionRepository, setTempDirectory } from '../compiler/sql';
 import { cancelled } from './errors';
 import { selfHostedRepository } from './extensions';
 import type { BundleName, DuckBackend, EngineInfo, OutputFile } from './types';
@@ -82,7 +82,7 @@ async function openBackend(bundle: duckdb.DuckDBBundle, worker: Worker, step: { 
 
   let spill = false;
   try {
-    await conn.query(`SET temp_directory = 'opfs://wellyboot-tmp'`);
+    await conn.query(setTempDirectory('opfs://wellyboot-tmp'));
     spill = true;
   } catch {
     // OPFS spill is unavailable in this browser or bundle; DuckDB keeps temporary data in memory.

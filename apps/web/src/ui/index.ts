@@ -16,3 +16,8 @@ export { StatusBadge, type Status } from './StatusBadge';
 export { StatusStrip, type StatusStripProps } from './StatusStrip';
 export { Toolbar } from './Toolbar';
 export { columnKind, type ColumnKind } from './columnKind';
+export { TypeTag } from './TypeTag';
+export { ColumnHeader, QualityBar, type Quality } from './QualityBar';
+export { FieldChip, PivotZone } from './Pivot';
+export { Section, Tabs, type TabItem } from './Section';
+export { glideTheme } from './glideTheme';

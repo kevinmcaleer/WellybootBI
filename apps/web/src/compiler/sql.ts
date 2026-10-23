@@ -31,3 +31,9 @@ export const setExtensionRepository = (url: string) => [`SET custom_extension_re
 
 /** Turn off DuckDB optimizers by name, for the rest of the connection (see EngineClient's plan-copy retry). */
 export const disableOptimizers = (names: string[]) => `SET disabled_optimizers = ${str(names.join(','))}`;
+
+/** The columns a query would return, without running it over the data. */
+export const describeOf = (sql: string) => `DESCRIBE ${sql}`;
+
+/** Let DuckDB spill temporary data to a directory (the origin private file system in the browser). */
+export const setTempDirectory = (path: string) => `SET temp_directory = ${str(path)}`;

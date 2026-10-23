@@ -35,6 +35,7 @@ export function Menu({
   renderTrigger,
   className,
   search,
+  scroll,
   open: controlled,
   onOpenChange,
 }: {
@@ -48,6 +49,8 @@ export function Menu({
   className?: string;
   /** The search field's label, e.g. "Search steps"; no field without it. */
   search?: string;
+  /** A long menu: its items scroll within the window's height instead of running off the screen. */
+  scroll?: boolean;
   /** Open or closed from outside (e.g. a keyboard shortcut opens it); `onOpenChange` hears every change. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -95,7 +98,7 @@ export function Menu({
   }
 
   const q = query.trim().toLowerCase();
-  const shown = q ? items.filter((i) => `${i.label} ${i.hint ?? ''}`.toLowerCase().includes(q)) : items;
+  const shown = q ? items.filter((i) => `${i.label} ${i.hint ?? ''} ${i.group ?? ''}`.toLowerCase().includes(q)) : items;
   const pick = (item: MenuItem) => {
     setOpen(false);
     // Focus goes back to the menu's button before the item runs, so a dialog the item opens returns focus there.
@@ -125,12 +128,13 @@ export function Menu({
             setOpen(true);
           }}
         >
-          {label}
+          {button?.iconOnly && typeof label === 'string' ? <span className="sr-only">{label}</span> : label}
           {!button?.iconOnly && <Icon name="chevron-down" size={14} />}
         </Button>
       )}
       {open && (
-        <div role="menu" aria-label={typeof label === 'string' ? label : undefined} className={`ui-popover absolute top-full z-popover mt-1 py-1 ${align === 'end' ? 'right-0' : 'left-0'}`} style={items.some((i) => i.items) ? { overflow: 'visible' } : undefined} onKeyDown={moveFocus}>
+        // The search field sits above the menu, not in it: a menu may hold only its items.
+        <div className={`ui-popover absolute top-full z-popover mt-1 py-1 ${align === 'end' ? 'right-0' : 'left-0'}`} style={items.some((i) => i.items) ? { overflow: 'visible' } : undefined} onKeyDown={moveFocus}>
           {search && (
             <div className="px-2 pb-1">
               <input
@@ -151,7 +155,9 @@ export function Menu({
             </div>
           )}
           {search && !shown.length && <div className="px-3 py-1 text-ink-muted">No matches</div>}
-          <MenuEntries items={shown} headingId={headingId} onPick={pick} />
+          <div role="menu" aria-label={typeof label === 'string' ? label : undefined} className={scroll ? 'max-h-[60vh] overflow-y-auto' : undefined}>
+            <MenuEntries items={shown} headingId={headingId} onPick={pick} />
+          </div>
         </div>
       )}
     </div>

@@ -1,13 +1,23 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { EditorScreen } from '../editor/EditorScreen';
 import { HomeScreen } from '../home/HomeScreen';
+import { useVisualStore } from '../model/visualStore';
+import { AppSwitcher } from '../powertools/AppSwitcher';
 import { Button, Menu, StatusBadge, StatusStrip, Toolbar } from '../ui';
+import { useLiveRun } from '../visuals/live';
 import { useEngineStore, type EngineStatus } from './engine';
 import { followHash, useSession } from './session';
 import { shortcutText } from './shortcuts';
 import { ShortcutsDialog } from './ShortcutsDialog';
 import { THEME_ICON, THEME_LABEL, useTheme } from './theme';
 import { useShortcuts } from './useShortcuts';
+
+/** The strip under the editor: the chart's rows and columns and how long DuckDB took, as Puddle's results bar shows. */
+function EditorStatus({ screen, end }: { screen: string; end: ReactNode }) {
+  const live = useLiveRun((s) => s.run);
+  const run = screen === 'editor' ? live : undefined;
+  return <StatusStrip rows={run?.rows.length} cols={run?.columns.length} ms={run?.elapsedMs} end={end} />;
+}
 
 export function EngineBadge({ status }: { status: EngineStatus }) {
   if (status.state === 'loading') return <StatusBadge status="pending">Starting engine</StatusBadge>;
@@ -43,11 +53,13 @@ export function AppShell() {
     help: () => useSession.getState().setShortcutsOpen(true),
     theme: theme.cycle,
     home: () => useSession.getState().navigate({ screen: 'home' }),
+    undo: () => useVisualStore.getState().undo(),
+    redo: () => useVisualStore.getState().redo(),
   });
 
   return (
     <div className="grid h-full grid-rows-[auto_minmax(0,1fr)_auto] bg-surface-canvas text-body text-ink" data-testid="app-shell">
-      <Toolbar brand="Wellyboot BI" project={route.screen === 'editor' ? 'Untitled dashboard' : undefined}>
+      <Toolbar brand="Wellyboot BI" switcher={<AppSwitcher />} project={route.screen === 'editor' ? 'Untitled dashboard' : undefined}>
         {route.screen === 'editor' && (
           <Button variant="ghost" icon="arrow-left" onClick={() => useSession.getState().navigate({ screen: 'home' })}>
             All dashboards
@@ -65,7 +77,7 @@ export function AppShell() {
         />
       </Toolbar>
       {route.screen === 'editor' ? <EditorScreen /> : <HomeScreen />}
-      <StatusStrip end={<EngineBadge status={engine} />} />
+      <EditorStatus screen={route.screen} end={<EngineBadge status={engine} />} />
       <ShortcutsDialog />
     </div>
   );

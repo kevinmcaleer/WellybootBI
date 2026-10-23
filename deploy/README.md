@@ -58,8 +58,10 @@ Pass `--no-extensions` for an image built with `FETCH_EXTENSIONS=0`.
 
 ## The tunnel
 
-1. In Cloudflare Zero Trust, go to Networks, then Tunnels, and create a tunnel. Copy its token.
-2. Add a public hostname pointing at the service `http://web:8080`.
+A Cloudflare Tunnel puts the app on a public hostname without opening a port on your router. The `cloudflared` service in `compose.yaml` makes an outbound connection to Cloudflare, and Cloudflare sends the hostname's traffic down it to the `web` service on the Compose network.
+
+1. In Cloudflare Zero Trust, go to Networks, then Tunnels, and create a tunnel of the Cloudflared type. On the install step, copy the token from the command it shows (the long string after `--token`); you don't need to run the command.
+2. On the tunnel's public hostname step (Published application routes in newer dashboards), add a hostname: pick the subdomain and the domain, then set the service type to `HTTP` and the URL to `web:8080`. That is the `web` service's name and its port inside the container, not the host port. Cloudflare creates the DNS record for the hostname.
 3. Copy `.env.example` to `.env` next to `compose.yaml` and set `CLOUDFLARE_TUNNEL_TOKEN` to the token (the tunnel's ID isn't needed: the token carries it), then start the stack with the tunnel:
 
    ```sh
@@ -67,3 +69,13 @@ Pass `--no-extensions` for an image built with `FETCH_EXTENSIONS=0`.
    ```
 
    The tunnel starts once the web health check passes.
+
+   Check it with `docker compose logs cloudflared`, which shows the registered connections, and the tunnel shows as healthy in the dashboard.
+
+The app needs no change for the hostname: it is served from the root of whatever host it is reached on, and the cross-origin isolation headers come from nginx, so they pass through the tunnel. Once the tunnel works, the host ports aren't needed for visitors; keep them for the smoke test or bind them to `127.0.0.1` in `WELLYBOOT_WEB_PORT` and `WELLYBOOT_SERVER_PORT` (for example `127.0.0.1:8090`).
+
+### Running on several nodes
+
+Run the same stack with the same `CLOUDFLARE_TUNNEL_TOKEN` on each node. Every node's `cloudflared` joins the one tunnel as a replica, the dashboard lists each as a connector, and Cloudflare sends each visitor to a nearby healthy replica and stops sending to a node that goes down. Nothing else changes: the hostname still points at `web:8080`, which each replica resolves on its own node. A tunnel takes up to 25 replicas.
+
+Each node serves its own copy of the app, so deploy the same version everywhere (for example by setting `WELLYBOOT_WEB_IMAGE` and `WELLYBOOT_SERVER_IMAGE` to the same published tags). Replicas don't share state: that's fine while the server is stateless, and publishing and share links will need a shared store before they run on more than one node.
