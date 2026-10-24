@@ -82,6 +82,16 @@ export function axisFormat(hint: FormatHint, format: NumberFormat): string {
   return h.decimals == null ? ',~f' : `,.${h.decimals}f`;
 }
 
+/**
+ * A value axis: its format, and for whole numbers (counts, say) ticks a whole number apart, so a small range isn't
+ * ticked at halves that the format rounds to the same label twice.
+ */
+export function valueAxis(hint: FormatHint | undefined, format: NumberFormat): { format: string; tickMinStep?: number } {
+  if (!hint) return { format: ',~f' };
+  const h = valueHint(hint, format);
+  return h.decimals === 0 && !h.percent ? { format: axisFormat(hint, format), tickMinStep: 1 } : { format: axisFormat(hint, format) };
+}
+
 const label = (v: unknown, hint: FormatHint, others: boolean, display?: DisplayFormat) => (others ? OTHERS_LABEL : v == null ? EMPTY_LABEL : formatCell(v, hint, display));
 
 /**

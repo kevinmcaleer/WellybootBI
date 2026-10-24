@@ -1,7 +1,7 @@
 // Bars: one per category, side by side for each series (stacking comes in Phase 9), upright or lying down.
 import type { BarOptions } from '@wellyboot/shared';
 import { describe, frame, names, seriesColour, tooltip } from './common';
-import { axisFormat, chartPoints, F, measureColumn } from './data';
+import { chartPoints, F, measureColumn, valueAxis } from './data';
 import { defineChart } from './define';
 
 export const bar = defineChart({
@@ -25,7 +25,7 @@ export const bar = defineChart({
     const titles = options.axisTitles;
     const encoding = {
       [cat]: { field: F.xLabel, type: 'nominal', sort: null, title: titles ? (options.xTitle ?? n.category ?? null) : null, axis: { labelOverlap: true } },
-      [val]: { field: F.value, type: 'quantitative', title: titles ? (options.yTitle ?? (n.values.length === 1 ? n.values[0] : null)) : null, axis: { format: first ? axisFormat(first.hint, options.numberFormat) : ',~f' } },
+      [val]: { field: F.value, type: 'quantitative', title: titles ? (options.yTitle ?? (n.values.length === 1 ? n.values[0] : null)) : null, axis: valueAxis(first?.hint, options.numberFormat) },
       ...(split && { color: seriesColour(options, ctx, split), [`${cat}Offset`]: { field: F.series, sort: null } }),
       tooltip: tooltip(visual, result),
     };
