@@ -8,6 +8,7 @@ import { useSession } from './session';
 import { SHORTCUTS } from './shortcuts';
 import { useTheme } from './theme';
 import { useLiveRun } from '../visuals/live';
+import { UNTITLED_DASHBOARD, useDashboardStore } from '../model/dashboardStore';
 
 beforeAll(() => {
   // jsdom has <dialog> but not its modal methods.
@@ -25,6 +26,7 @@ afterEach(() => {
   useEngineStore.setState({ status: { state: 'loading' }, engine: null });
   useTheme.getState().setPreference('system');
   useLiveRun.setState({ running: false, run: undefined });
+  useDashboardStore.setState({ name: UNTITLED_DASHBOARD });
   location.hash = '';
 });
 
@@ -89,5 +91,27 @@ describe('the app shell', () => {
     act(() => void input.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true, cancelable: true })));
     expect(screen.queryByTestId('shortcuts-list')).toBeNull();
     input.remove();
+  });
+
+  it('renames the dashboard from the menu on its name in the toolbar', () => {
+    render(<AppShell />);
+    fireEvent.click(screen.getByRole('button', { name: 'New dashboard' }));
+    fireEvent.click(screen.getByTestId('project-menu'));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Rename/ }));
+    const input = screen.getByLabelText('Name');
+    expect(input).toHaveValue('Untitled dashboard');
+    fireEvent.change(input, { target: { value: 'Lessons by month' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Rename' }));
+    expect(screen.queryByRole('dialog', { name: 'Rename dashboard' })).not.toBeInTheDocument();
+    expect(screen.getByTestId('project-name')).toHaveTextContent('Lessons by month');
+  });
+
+  it('won’t rename the dashboard to a blank name', () => {
+    render(<AppShell />);
+    fireEvent.click(screen.getByRole('button', { name: 'New dashboard' }));
+    fireEvent.click(screen.getByTestId('project-menu'));
+    fireEvent.click(screen.getByRole('menuitem', { name: /Rename/ }));
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: '  ' } });
+    expect(screen.getByRole('button', { name: 'Rename' })).toBeDisabled();
   });
 });
