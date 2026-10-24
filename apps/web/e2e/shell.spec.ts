@@ -41,6 +41,20 @@ test('the editor opens from the home screen, and Back returns', async ({ page })
   await expect(page.getByRole('heading', { name: 'Dashboards', exact: true })).toBeVisible();
 });
 
+test('the dashboard is renamed from the menu on its name', async ({ page }) => {
+  await openApp(page);
+  await page.getByRole('button', { name: 'New dashboard' }).click();
+  await page.getByRole('dialog', { name: 'Data sources' }).getByRole('button', { name: 'Close' }).click();
+  await page.getByTestId('project-menu').click();
+  await page.getByRole('menuitem', { name: 'Rename' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Rename dashboard' });
+  await expect(dialog.getByLabel('Name')).toBeFocused();
+  await dialog.getByLabel('Name').fill('Lessons by month');
+  await page.keyboard.press('Enter');
+  await expect(dialog).toBeHidden();
+  await expect(page.getByTestId('project-name')).toHaveText('Lessons by month');
+});
+
 for (const theme of ['light', 'dark'] as const) {
   test.describe(`${theme} theme`, () => {
     test.use({ colorScheme: theme });

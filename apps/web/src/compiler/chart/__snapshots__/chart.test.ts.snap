@@ -311,6 +311,7 @@ exports[`compileChart > draws a line over months, ordered along the axis 1`] = `
     "y": {
       "axis": {
         "format": ",.0f",
+        "tickMinStep": 1,
       },
       "field": "value",
       "title": "Sum of units",

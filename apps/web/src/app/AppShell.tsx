@@ -1,11 +1,13 @@
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { EditorScreen } from '../editor/EditorScreen';
 import { HomeScreen } from '../home/HomeScreen';
+import { useDashboardStore } from '../model/dashboardStore';
 import { useVisualStore } from '../model/visualStore';
 import { AppSwitcher } from '../powertools/AppSwitcher';
 import { Button, Menu, StatusBadge, StatusStrip, Toolbar } from '../ui';
 import { useLiveRun } from '../visuals/live';
 import { useEngineStore, type EngineStatus } from './engine';
+import { RenameDashboardDialog } from './RenameDashboardDialog';
 import { followHash, useSession } from './session';
 import { shortcutText } from './shortcuts';
 import { ShortcutsDialog } from './ShortcutsDialog';
@@ -48,6 +50,8 @@ export function AppShell() {
   const route = useSession((s) => s.route);
   const engine = useEngineStore((s) => s.status);
   const theme = useTheme();
+  const dashboardName = useDashboardStore((s) => s.name);
+  const [renaming, setRenaming] = useState(false);
   useEffect(followHash, []);
   useShortcuts({
     help: () => useSession.getState().setShortcutsOpen(true),
@@ -59,7 +63,12 @@ export function AppShell() {
 
   return (
     <div className="grid h-full grid-rows-[auto_minmax(0,1fr)_auto] bg-surface-canvas text-body text-ink" data-testid="app-shell">
-      <Toolbar brand="Wellyboot BI" switcher={<AppSwitcher />} project={route.screen === 'editor' ? 'Untitled dashboard' : undefined}>
+      <Toolbar
+        brand="Wellyboot BI"
+        switcher={<AppSwitcher />}
+        project={route.screen === 'editor' ? dashboardName : undefined}
+        projectMenu={[{ label: 'Rename', onSelect: () => setRenaming(true) }]}
+      >
         {route.screen === 'editor' && (
           <Button variant="ghost" icon="arrow-left" onClick={() => useSession.getState().navigate({ screen: 'home' })}>
             All dashboards
@@ -79,6 +88,7 @@ export function AppShell() {
       {route.screen === 'editor' ? <EditorScreen /> : <HomeScreen />}
       <EditorStatus screen={route.screen} end={<EngineBadge status={engine} />} />
       <ShortcutsDialog />
+      {renaming && <RenameDashboardDialog onClose={() => setRenaming(false)} />}
     </div>
   );
 }

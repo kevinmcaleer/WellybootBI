@@ -1,7 +1,7 @@
 // Lines: values along a date or a number, one line per series, with a point at each value to hover.
 import type { LineOptions } from '@wellyboot/shared';
 import { describe, frame, names, seriesColour, tooltip } from './common';
-import { axisFormat, chartPoints, F, groupColumn, measureColumn, type Point } from './data';
+import { axisFormat, chartPoints, F, groupColumn, measureColumn, valueAxis, type Point } from './data';
 import { defineChart } from './define';
 
 /**
@@ -36,7 +36,7 @@ export const line = defineChart({
       x: numericX
         ? { field: F.x, type: 'quantitative', title: titles ? (options.xTitle ?? n.category ?? null) : null, scale: { zero: false }, axis: { format: axisFormat(cat!.hint, 'auto') } }
         : { field: F.xLabel, type: 'ordinal', sort: null, title: titles ? (options.xTitle ?? n.category ?? null) : null, axis: { labelOverlap: true, labelAngle: 0 } },
-      y: { field: F.value, type: 'quantitative', title: titles ? (options.yTitle ?? (n.values.length === 1 ? n.values[0] : null)) : null, axis: { format: first ? axisFormat(first.hint, options.numberFormat) : ',~f' } },
+      y: { field: F.value, type: 'quantitative', title: titles ? (options.yTitle ?? (n.values.length === 1 ? n.values[0] : null)) : null, axis: valueAxis(first?.hint, options.numberFormat) },
       ...(split && { color: seriesColour(options, ctx, split) }),
     };
     return frame(visual, points, ctx, describe('Line chart', visual, result, points.length, 'point'), {

@@ -112,6 +112,14 @@ describe('compileChart', () => {
     expect(data(spec as TopLevelSpec).map((p) => p.x)).toEqual([0, 5]);
   });
 
+  it('ticks a count a whole number apart, so its labels never repeat', () => {
+    const y = (c: { visual: Visual; result: ChartResult }) => (specOf(c) as { encoding: { y: { axis: { format: string; tickMinStep?: number } } } }).encoding.y.axis;
+    expect(y(byUnits)).toEqual({ format: ',.0f', tickMinStep: 1 });
+    // A sum of decimals can be ticked between whole numbers.
+    expect(y(byRegion({ type: 'line', encoding: { category: 0, values: [0] } })).tickMinStep).toBeUndefined();
+    expect(y(byRegion({ type: 'line', encoding: { category: 0, values: [0] }, options: { numberFormat: 'whole' } })).tickMinStep).toBe(1);
+  });
+
   it('draws a pie with each slice’s share and an Others slice', () => {
     const spec = specOf(topRegions);
     expect(data(spec).map((p) => [p.xLabel, p.valueLabel, p.shareLabel])).toEqual([
